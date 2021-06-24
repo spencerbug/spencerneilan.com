@@ -6,7 +6,7 @@ const IDENTITY_URL =
     'https://identity.ic0.app'
 
 
-class AuthClientWrapper {
+export class AuthClientWrapper {
     public authClient?:AuthClient;
     public ready = false;
     constructor() {
@@ -31,7 +31,7 @@ class AuthClientWrapper {
     }
 
     async logout() {
-        return this.authClient?.logout({returnTo: '/'})
+        return this.authClient?.logout({returnTo: '/#'})
     }
 
     async getIdentity() {

@@ -1,9 +1,15 @@
 
-# Svelte + TS + Vite
+# spencerneilan.com
+## Written with svelte + typescript + vite
 
-# start dfx
+# start dfx Identity Server
+You will need dfx. 
+```
+DFX_VERSION=0.7.0 sh -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)"
 
-go to internet-identity project folder:
+```
+
+go to internet-identity project directory. You can get it from https://github.com/dfinity/internet-identity.git:
 ```bash
 dfx start --background --clean --host=0.0.0.0:8000
 
