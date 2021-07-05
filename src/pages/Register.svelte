@@ -1,7 +1,7 @@
 <script>
     // import {createEventDispatcher} from 'svelte'
     import { Form, FormGroup, Button, Input, Label } from 'sveltestrap'
-    import {s_myAccount, handleRegister } from "../lib/authStore"
+    import {s_myAccount, handleRegister, s_hasAccount } from "../lib/authStore"
     
 
     
@@ -32,7 +32,11 @@
         <Label for="imgUrl">Image URL</Label>
         <Input type="text" bind:value={$s_myAccount.imgUrl} id="imgUrl"/>
     </FormGroup>
+    {#if $s_hasAccount}
+    <Button type="submit">Update</Button>
+    {:else}
     <Button type="submit">Register</Button>
+    {/if}
 
 </form>
 

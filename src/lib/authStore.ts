@@ -89,7 +89,7 @@ export const handleRegister = async () => {
         s_dataLoading.set(true)
         let myAccount = get(s_myAccount)
         await accountsActor.upsertMyAccount(myAccount)
+        s_hasAccount.set(true)
         s_dataLoading.set(false)
-        // s_myAccount.set(myAccount)
     }
 }
