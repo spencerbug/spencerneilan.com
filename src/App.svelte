@@ -5,10 +5,11 @@
   import Blog from './pages/Blog.svelte'
   import Projects from './pages/Projects.svelte'
   import Resume from './pages/Resume.svelte'
-  import {Styles, Spinner} from 'sveltestrap'
+  import {Spinner, Container} from 'sveltestrap'
   import { onMount } from 'svelte';
   import {s_dataLoading, s_authLoading, authInit} from './lib/authStore'
   import Router from 'svelte-spa-router'
+
 
 
   onMount(async () => {
@@ -17,21 +18,23 @@
 
 </script>
 
-<Styles/>
+<!-- <Styles/> -->
 
 <main>
   <Nav/>
-  {#if $s_dataLoading}
-  <h1><Spinner color="info"/></h1>
-  {:else}
-  <Router routes={{
-    '/': Home,
-    '/register': Register,
-    '/projects': Projects,
-    '/blog':Blog,
-    '/resume':Resume
-  }}/>
-  {/if}
+  <Container>
+    {#if $s_dataLoading}
+    <h1><Spinner color="info"/></h1>
+    {:else}
+    <Router routes={{
+      '/': Home,
+      '/register': Register,
+      '/projects': Projects,
+      '/blog':Blog,
+      '/resume':Resume
+    }}/>
+    {/if}
+  </Container>
 </main>
 
 <style>

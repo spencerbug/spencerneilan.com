@@ -1,4 +1,6 @@
+import './main.scss'
 import App from './App.svelte'
+
 
 /**
  * @dfinity/agent requires this. Can be removed once it's fixed

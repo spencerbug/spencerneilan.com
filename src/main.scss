@@ -1,0 +1,9 @@
+// Variable overrides for bootstrap
+
+// $primary: purple;
+// $secondary: skyblue;
+// $light: #d8d8d8;
+
+@import "../node_modules/bootswatch/dist/quartz/variables";
+@import "../node_modules/bootstrap/scss/bootstrap";
+@import "../node_modules/bootswatch/dist/quartz/bootswatch";

@@ -38,7 +38,7 @@
     }
 </style>
 
-<Navbar color="light" light expand="md">
+<Navbar color="primary" class="navbar-dark" light expand="md">
     <NavbarBrand href="/#">Spencer Neilan</NavbarBrand>
     <NavbarToggler on:click={() => (isOpen = !isOpen)} />
     <Collapse {isOpen} navbar expand="md" on:update={handleUpdate}>
