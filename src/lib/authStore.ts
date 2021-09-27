@@ -4,7 +4,7 @@ import type { Identity } from "@dfinity/agent";
 import {Actor, HttpAgent} from "@dfinity/agent";
 import {authClient} from "./authClient"
 import type {_SERVICE,Account} from "../backend/accounts/types"
-import {idlFactory as accounts_idl, canisterId as accounts_id} from "dfx-generated/accounts"
+import {idlFactory as accounts_idl} from "dfx-generated/accounts"
 import {push} from 'svelte-spa-router'
 
 //todo: change this to a class
@@ -29,8 +29,10 @@ export const handleAuthenticated = async () => {
     }
     s_isLoggedIn.set(await authClient.isAuthenticated())
     let agent:HttpAgent = get(s_agent)
-    s_accountsActor.set(Actor.createActor(accounts_idl, 
-        {agent, canisterId:accounts_id}))
+    agent.fetchRootKey()
+    let accountsActor=Actor.createActor(accounts_idl, 
+        {agent, canisterId:process.env["VITE_APP_ACCOUNTS_CANISTER_ID"]})
+    s_accountsActor.set(accountsActor)
 }
 
 export const authInit = async () => {
