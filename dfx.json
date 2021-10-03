@@ -4,9 +4,14 @@
       "main": "src/backend/accounts/main.mo",
       "type": "motoko"
     },
+    "storage": {
+      "main":"src/backend/storage/Container.mo",
+      "type":"motoko"
+    },
     "assets": {
       "dependencies": [
-        "accounts"
+        "accounts",
+        "storage"
       ],
       "frontend": {
         "entrypoint": "dist/index.html"
