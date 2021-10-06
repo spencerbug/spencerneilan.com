@@ -9,11 +9,11 @@ module {
   
   public type Service = actor {
     getSize : shared () -> async Nat;
-    putChunks : shared (FileId, Nat, Blob) -> async ?();
+    putFileChunk : shared (FileId, ChunkNum, Blob) -> async ?();
     putFile : shared FileInfo -> async ?FileId;
-    getFileChunk: shared (FileId, Nat, Principal) -> async ?Blob;
+    getFileChunk: shared (FileId, ChunkNum, Principal) -> async ?Blob;
     getFileInfo: shared (FileId, Principal) -> async ?FileData;
-    delFileChunks : shared (FileId, Nat, Principal) -> async ();
+    delFileChunk : shared (FileId, ChunkNum, Principal) -> async ();
     delFileInfo : shared (FileId, Principal) -> async ();
     getAllFiles : shared () -> async [FileData];
   };
@@ -39,7 +39,17 @@ module {
     #mp4;
     #avi;
     #txt;
+    #html;
+    #zip;
+    #json;
+    #bin;
   };
+
+  public type ChunkNum = {
+    #text_chunknum:Text;
+    #nat_chunknum:Nat;
+  };
+  
 
   public type FileInfo = {
     createdAt : Timestamp;
@@ -76,6 +86,17 @@ module {
     st
   };
 
+  public type HttpRequest = {
+    method: Text;
+    url: Text;
+    headers: [(Text, Text)];
+    body: Blob;
+  };
+  public type HttpResponse = {
+    status_code: Nat16;
+    headers: [(Text, Text)];
+    body: Blob;
+  };
 
   
 }

@@ -4,12 +4,14 @@ import Debug "mo:base/Debug";
 import Principal "mo:base/Principal";
 import Text "mo:base/Text";
 import Nat "mo:base/Nat";
+import Nat16 "mo:base/Nat16";
 import Buckets "Buckets";
 import Types "./Types";
 import HashMap "mo:base/HashMap";
 import Iter "mo:base/Iter";
 import Blob "mo:base/Blob";
 import Buffer "mo:base/Buffer";
+import CertifiedData "mo:base/CertifiedData";
 
 
 // Container actor holds all created canisters in a canisters array 
@@ -76,6 +78,10 @@ shared ({caller = owner}) actor class Container() = this {
   type FileId = Types.FileId;
   type FileInfo = Types.FileInfo;
   type FileData = Types.FileData;
+  type FileExtension = Types.FileExtension;
+  type HttpRequest = Types.HttpRequest;
+  type HttpResponse = Types.HttpResponse;
+  type ChunkNum = Types.ChunkNum;
 
 // canister info hold an actor reference and the result from rts_memory_size
   type CanisterState<Bucket, Nat> = {
@@ -208,9 +214,9 @@ shared ({caller = owner}) actor class Container() = this {
   };
 
   // persist chunks in bucket
-  public func putFileChunks(fileId: FileId, chunkNum : Nat, fileSize: Nat, chunkData : Blob) : async () {
+  public func putFileChunk(fileId: FileId, chunkNum : Nat, fileSize: Nat, chunkData : Blob) : async () {
     let b : Bucket = await getEmptyBucket(?fileSize);
-    let _ = await b.putChunks(fileId, chunkNum, chunkData);
+    let _ = await b.putChunk(fileId, #nat_chunknum(chunkNum), chunkData);
   };
 
   // save file info 
@@ -221,7 +227,7 @@ shared ({caller = owner}) actor class Container() = this {
     fileId
   };
 
-  func getBucket(cid: Principal) : async ?Bucket {
+  func getBucket(cid: Principal) : ?Bucket {
     let cs: ?(?CanisterState<Bucket, Nat>) =  Array.find<?CanisterState<Bucket, Nat>>(Array.freeze(canisters), 
         func(cs: ?CanisterState<Bucket, Nat>) : Bool {
           switch (cs) {
@@ -246,31 +252,31 @@ shared ({caller = owner}) actor class Container() = this {
   // get file chunk 
   public func getFileChunk(fileId : FileId, chunkNum : Nat, cid: Principal) : async ?Blob {
     do ? {
-      let b : Bucket = (await getBucket(cid))!;
-      return await b.getChunks(fileId, chunkNum);
+      let b : Bucket = (getBucket(cid))!;
+      return await b.getChunks(fileId, #nat_chunknum(chunkNum));
     }   
   };
 
   // get file info
   public func getFileInfo(fileId : FileId, cid: Principal) : async ?FileData {
     do ? {
-      let b : Bucket = (await getBucket(cid))!;
+      let b : Bucket = (getBucket(cid))!;
       return await b.getFileInfo(fileId);
     }   
   };
 
     // delete file chunk
-  public func delFileChunks(fileId: FileId, chunkNum : Nat, cid: Principal) : async ?() {
+  public func delFileChunk(fileId: FileId, chunkNum : Nat, cid: Principal) : async ?() {
       do ? {
-          let b : Bucket = (await getBucket(cid))!;
-          let _ = await b.delChunks(fileId, chunkNum);
+          let b : Bucket = (getBucket(cid))!;
+          let _ = await b.delChunks(fileId, #nat_chunknum(chunkNum));
       }
   };
 
   // delete file info
   public func delFileInfo(fileId : FileId, cid: Principal) : async ?() {
       do ? {
-        let b : Bucket = (await getBucket(cid))!;
+        let b : Bucket = (getBucket(cid))!;
         let _ = await b.delFileInfo(fileId);
       }
   };
@@ -297,8 +303,63 @@ shared ({caller = owner}) actor class Container() = this {
     ignore Cycles.accept(Cycles.available());
   };
 
-  // public query func http_request() : async HttpResponse
+  func ext2MIME(fileExt:FileExtension) : Text {
+    switch fileExt {
+      case(#jpeg){"image/jpeg"}; // are fallthroughs allowed?
+      case(#jpg){"image/jpeg"};
+      case(#png){"image/png"};
+      case(#gif){"image/gif"};
+      case(#svg){"image/svg+xml"};
+      case(#mp3){"audio/mpeg"};
+      case(#wav){"audio/wav"};
+      case(#aac){"audio/aac"};
+      case(#mp4){"video/mp4"};
+      case(#avi){"video/x-msvideo"};
+      case(#txt){"text/plain"};
+      case(#html){"text/html"};
+      case(#zip){"application/zip"};
+      case(#json){"application/json"};
+      case(#bin){"application/octet-stream"};
+    };
+  };
 
+  public func http_request(req: HttpRequest) : async HttpResponse {
+    // url format: <canisterid>.raw.ic0.app/storage?fileId=bucketId=<bucketId>&<fileId>&chunkNum=<chunkNum>
+    // most images are only 1 chunk, so this will suffice for a profile picture or something
+    // for later: output an httpstream, so we can load videos and progressive jpegwith a single link!
+    var status_code=404;
+    var headers = [("Content-Type",ext2MIME(#html))];
+    var body:Blob = "404 Not Found";
+    let _ = do ? { // is this possible without assignment
+      let storageParams:Text = Text.stripStart(req.url, #text("/storage?"))!;
+      let fields:Iter.Iter<Text> = Text.split(storageParams, #text("&"));
+      var fileId:?FileId=null;
+      var chunkNum:?ChunkNum=null;
+      var bucketId:?Principal=null;
+      for (field:Text in fields){
+        let kv:[Text] = Iter.toArray<Text>(Text.split(field,#text("=")));
+        if (kv[0]=="fileId"){
+          fileId:=?kv[1];
+        }
+        else if (kv[0]=="chunkNum"){
+          chunkNum:=?#text_chunknum(kv[1]);
+        }
+        else if (kv[0]=="bucketId"){
+          bucketId:=?Principal.fromText(kv[1]);
+        }
+      };
+      let b:Bucket = getBucket(bucketId!)!;
+      let fileData:FileData = (await b.getFileInfo(fileId!))!;
+      body := (await b.getChunks(fileId!, chunkNum!))!;
+      headers := [("Content-Type",ext2MIME(fileData.extension)), ("certificate",Text.decodeUtf8(CertifiedData.getCertificate()!)!)];
+      status_code:=200;
+    };
+    return {
+      status_code=Nat16.fromNat(status_code);
+      headers=headers;
+      body=body;
+    };
+  };
 };
 
   

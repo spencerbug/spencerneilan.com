@@ -18,6 +18,7 @@ actor class Bucket () = this {
   type FileData = Types.FileData;
   type ChunkId = Types.ChunkId;
   type State = Types.State;
+  type ChunkNum = Types.ChunkNum;
 
   var state = Types.empty();
   let limit = 20_000_000_000_000;
@@ -87,12 +88,17 @@ actor class Bucket () = this {
     }
   };
 
-  func chunkId(fileId : FileId, chunkNum : Nat) : ChunkId {
-      fileId # (Nat.toText(chunkNum))
+  func chunkId(fileId : FileId, chunkNum : ChunkNum) : ChunkId {
+    // awkward workaround because there's no Text.parseNat()
+      let chunkNumText:Text=switch chunkNum {
+        case (#text_chunknum(x)){x};
+        case (#nat_chunknum(x)){Nat.toText(x)};
+      };
+      fileId # chunkNumText
   };
   // add chunks 
   // the structure for storing blob chunks is to unse name + chunk num eg: 123a1, 123a2 etc
-  public func putChunks(fileId : FileId, chunkNum : Nat, chunkData : Blob) : async ?() {
+  public func putChunk(fileId : FileId, chunkNum : ChunkNum, chunkData : Blob) : async ?() {
     do ? {
       Debug.print("generated chunk id is " # debug_show(chunkId(fileId, chunkNum)) # "from"  #   debug_show(fileId) # "and " # debug_show(chunkNum)  #"  and chunk size..." # debug_show(Blob.toArray(chunkData).size()) );
       state.chunks.put(chunkId(fileId, chunkNum), chunkData);
@@ -121,11 +127,11 @@ actor class Bucket () = this {
     }
   };
 
-  public query func getChunks(fileId : FileId, chunkNum: Nat) : async ?Blob {
+  public query func getChunks(fileId : FileId, chunkNum: ChunkNum) : async ?Blob {
       state.chunks.get(chunkId(fileId, chunkNum))
   };
 
-  public func delChunks(fileId : FileId, chunkNum : Nat) : async () {
+  public func delChunks(fileId : FileId, chunkNum : ChunkNum) : async () {
         state.chunks.delete(chunkId(fileId, chunkNum));
   };
 
