@@ -77,6 +77,7 @@ shared ({caller = owner}) actor class Container() = this {
   type FileId = Types.FileId;
   type FileInfo = Types.FileInfo;
   type FileData = Types.FileData;
+  type FileUploadResult = Types.FileUploadResult;
 
 // canister info hold an actor reference and the result from rts_memory_size
   type CanisterState<Bucket, Nat> = {
@@ -134,7 +135,7 @@ shared ({caller = owner}) actor class Container() = this {
             case null { false };
             case (?cs) {
               Debug.print("found canister with principal..." # debug_show(Principal.toText(Principal.fromActor(cs.bucket))));
-              // calculate if there is enough space in canister for the new file.
+              // calculate if there is enough space in canister for the new file, all of the chunks
               cs.size + fs < threshold 
             };
           };
@@ -216,11 +217,16 @@ shared ({caller = owner}) actor class Container() = this {
   };
 
   // save file info 
-  public func putFileInfo(fi: FileInfo) : async ?FileId {
-    let b: Bucket = await getEmptyBucket(?fi.size);
-    Debug.print("creating file info..." # debug_show(fi));
-    let fileId = await b.putFile(fi);
-    fileId
+  public func putFileInfo(fi: FileInfo) : async ?FileUploadResult {
+    do ? {
+      let b: Bucket = await getEmptyBucket(?fi.size);
+      Debug.print("creating file info..." # debug_show(fi));
+      let fileId:FileId = (await b.putFile(fi))!;
+      {
+        bucketId = Principal.fromActor(b);
+        fileId = fileId;
+      };
+    }
   };
 
   func getBucket(cid: Principal) : ?Bucket {

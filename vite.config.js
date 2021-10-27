@@ -3,6 +3,8 @@ import {svelte} from '@sveltejs/vite-plugin-svelte'
 import dfxJson from "./dfx.json"
 import path from "path"
 import scss from "rollup-plugin-scss";
+import * as fs from 'fs'
+import {HTMLElement, parse, TextNode} from 'node-html-parser'
 
 let localCanisters, prodCanisters, canisters;
 
@@ -59,17 +61,38 @@ export default defineConfig(() => {
   return {
     plugins: [
       svelte({
-        emitCss: true
+        emitCss: true,
       }),
-      scss({watch:"src"})
+      scss({
+        watch:"src",
+        output: path.resolve('dist/assets/main.css'),
+      }),
     ],
     resolve: {
       alias: {
         ...aliases,
       },
     },
+    build: {
+      rollupOptions: {
+        plugins: [
+          {
+            name: 'add-css-link-to-html-head',
+            closeBundle() {
+              const data = fs.readFileSync('dist/index.html')
+              const doc = parse(data)
+              const head = doc.querySelector('head')
+              const styleLink = new HTMLElement('link',{}, 'rel="stylesheet" href="/assets/main.css"', head)
+              head.appendChild(styleLink)
+              const source = '<!doctype html>\n' + doc.toString()
+              let result = fs.writeFileSync('dist/index.html', source)
+            },
+          },
+        ]
+      }
+    },
     define: {
       "process.env": process.env
-    }
+    },
   }
 })

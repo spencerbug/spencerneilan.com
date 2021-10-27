@@ -4,3 +4,4 @@ dist
 dist-ssr
 *.local
 .dfx
+src/backend/storage_dht/*
