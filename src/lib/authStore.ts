@@ -5,9 +5,10 @@ import {Actor, HttpAgent} from "@dfinity/agent";
 import {authClient} from "./authClient"
 import type {_SERVICE,Account} from "../backend/accounts/types"
 import {idlFactory as accounts_idl} from "dfx-generated/accounts"
+import {idlFactory as storage_idl} from "dfx-generated/storage"
 import {push} from 'svelte-spa-router'
 
-//todo: change this to a class
+// authStore should be called first before contentStore, since this file declares the actors
 
 export const s_authLoading = writable(false)
 export const s_dataLoading = writable(false)
@@ -17,6 +18,7 @@ export const s_myAccount = writable({firstName: "",lastName: "",company: "",comp
 export const s_isLoggedIn = writable(false)
 export const s_agent = writable(null)
 export const s_accountsActor = writable(null)
+export const s_storageActor = writable(null)
 
 
 export const handleAuthenticated = async () => {
@@ -30,9 +32,10 @@ export const handleAuthenticated = async () => {
     s_isLoggedIn.set(await authClient.isAuthenticated())
     let agent:HttpAgent = get(s_agent)
     agent.fetchRootKey()
-    let accountsActor=Actor.createActor(accounts_idl, 
-        {agent, canisterId:process.env["VITE_APP_ACCOUNTS_CANISTER_ID"]})
+    let accountsActor=Actor.createActor(accounts_idl, {agent, canisterId:process.env["VITE_APP_ACCOUNTS_CANISTER_ID"]})
+    let storageActor=Actor.createActor(storage_idl, {agent, canisterId:process.env["VITE_APP_STORAGE_CANISTER_ID"]})
     s_accountsActor.set(accountsActor)
+    s_storageActor.set(storageActor)
 }
 
 export const authInit = async () => {

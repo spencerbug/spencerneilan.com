@@ -16,6 +16,8 @@
     await authInit()
   })
 
+  // const prefix = `/${process.env["VITE_APP_ASSETS_CANISTER_ID"]}}`
+
 </script>
 
 <!-- <Styles/> -->

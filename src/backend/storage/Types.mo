@@ -6,44 +6,14 @@ import TrieMap "mo:base/TrieMap";
 import Blob "mo:base/Blob";
 
 module {
-  
-  public type Service = actor {
-    getSize : shared () -> async Nat;
-    putFileChunk : shared (FileId, ChunkNum, Blob) -> async ?();
-    putFile : shared FileInfo -> async ?FileId;
-    getFileChunk: shared (FileId, ChunkNum, Principal) -> async ?Blob;
-    getFileInfo: shared (FileId, Principal) -> async ?FileData;
-    delFileChunk : shared (FileId, ChunkNum, Principal) -> async ();
-    delFileInfo : shared (FileId, Principal) -> async ();
-    getAllFiles : shared () -> async [FileData];
-  };
-  
-  public type Timestamp = Int; // See mo:base/Time and Time.now()
 
   public type FileId = Text;
+  
+  public type Timestamp = Int; // See mo:base/Time and Time.now()
 
   public type ChunkData = Blob;
 
   public type ChunkId = Text; 
-  
-
-  public type FileExtension = {
-    #jpeg;
-    #jpg;
-    #png;
-    #gif;
-    #svg;
-    #mp3;
-    #wav;
-    #aac;
-    #mp4;
-    #avi;
-    #txt;
-    #html;
-    #zip;
-    #json;
-    #bin;
-  };
 
   public type ChunkNum = {
     #text_chunknum:Text;
@@ -56,7 +26,7 @@ module {
     chunkCount: Nat;    
     name: Text;
     size: Nat;
-    extension: FileExtension;
+    filetype: Text;
   }; 
 
   public type FileData = {
@@ -67,7 +37,23 @@ module {
     chunkCount: Nat;    
     name: Text;
     size: Nat;
-    extension: FileExtension;
+    filetype: Text;
+  };
+
+  public type FileUploadResult = {
+    bucketId: Principal;
+    fileId: FileId;
+  };
+
+  public type Service = actor {
+    getSize : shared () -> async Nat;
+    putFileChunk : shared (FileId, Nat, Blob) -> async ?Principal;
+    putFileInfo : shared FileInfo -> async ?FileUploadResult;
+    getFileChunk: shared (FileId, ChunkNum, Principal) -> async ?Blob;
+    getFileInfo: shared (FileId, Principal) -> async ?FileData;
+    delFileChunk : shared (FileId, ChunkNum, Principal) -> async ();
+    delFileInfo : shared (FileId, Principal) -> async ();
+    getAllFiles : shared () -> async [FileData];
   };
 
   public type Map<X, Y> = TrieMap.TrieMap<X, Y>;
@@ -86,6 +72,26 @@ module {
     st
   };
 
+  public type StreamingCallbackToken = {
+    content_encoding : Text;
+    index : Nat;
+    key : Text;
+  };
+
+  public type StreamingCallbackResponse = {
+    body : Blob;
+    token : ?StreamingCallbackToken;
+  };
+
+  public type StreamingCallback = query (StreamingCallbackToken) -> async (StreamingCallbackResponse);
+
+  public type StreamingStrategy = {
+    #Callback: {
+      callback : StreamingCallback;
+      token : StreamingCallbackToken;
+    }
+  };
+
   public type HttpRequest = {
     method: Text;
     url: Text;
@@ -96,6 +102,7 @@ module {
     status_code: Nat16;
     headers: [(Text, Text)];
     body: Blob;
+    streaming_strategy : ?StreamingStrategy;
   };
 
   

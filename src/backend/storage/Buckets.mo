@@ -23,7 +23,6 @@ actor class Bucket () = this {
   type ChunkId = Types.ChunkId;
   type State = Types.State;
   type ChunkNum = Types.ChunkNum;
-  type FileExtension = Types.FileExtension;
   type HttpRequest = Types.HttpRequest;
   type HttpResponse = Types.HttpResponse;
 
@@ -79,7 +78,7 @@ actor class Bucket () = this {
                                           uploadedAt = Time.now();
                                           chunkCount = fi.chunkCount;
                                           size = fi.size ;
-                                          extension = fi.extension;
+                                          filetype = fi.filetype;
                                       }
                   );
                   ?fileId
@@ -121,7 +120,7 @@ actor class Bucket () = this {
             name = v.name;
             size = v.size;
             chunkCount = v.chunkCount;
-            extension = v.extension;
+            filetype = v.filetype;
             createdAt = v.createdAt;
             uploadedAt = v.uploadedAt;
           }
@@ -166,26 +165,6 @@ actor class Bucket () = this {
     return Cycles.balance();
   };
 
-  func ext2MIME(fileExt:FileExtension) : Text {
-    switch fileExt {
-      case(#jpeg){"image/jpeg"}; // are fallthroughs allowed?
-      case(#jpg){"image/jpeg"};
-      case(#png){"image/png"};
-      case(#gif){"image/gif"};
-      case(#svg){"image/svg+xml"};
-      case(#mp3){"audio/mpeg"};
-      case(#wav){"audio/wav"};
-      case(#aac){"audio/aac"};
-      case(#mp4){"video/mp4"};
-      case(#avi){"video/x-msvideo"};
-      case(#txt){"text/plain"};
-      case(#html){"text/html"};
-      case(#zip){"application/zip"};
-      case(#json){"application/json"};
-      case(#bin){"application/octet-stream"};
-    };
-  };
-
   // To do: https://github.com/DepartureLabsIC/non-fungible-token/blob/1c183f38e2eea978ff0332cf6ce9d95b8ac1b43d/src/http.mo
 
   public query func http_request(req: HttpRequest) : async HttpResponse {
@@ -194,7 +173,7 @@ actor class Bucket () = this {
     // assume most images are only 1 chunk, so this will suffice for a profile picture or something
     // for later: output an httpstream, so we can load videos and progressive jpegwith a single link!
     var status_code=404;
-    var headers = [("Content-Type",ext2MIME(#html))];
+    var headers = [("Content-Type","text/html")];
     var body:Blob = "404 Not Found";
     let _ = do ? { // is this possible without assignment
       let storageParams:Text = Text.stripStart(req.url, #text("/storage?"))!;
@@ -212,7 +191,7 @@ actor class Bucket () = this {
       };
       let fileData:FileData = getFileInfoData(fileId!)!;
       body := state.chunks.get(chunkId(fileId!, chunkNum!))!;
-      headers := [("Content-Type",ext2MIME(fileData.extension)), ("Content-Length",Nat.toText(fileData.size)),("certificate",Text.decodeUtf8(CertifiedData.getCertificate()!)!)];
+      headers := [("Content-Type",fileData.filetype), ("Content-Length",Nat.toText(fileData.size)),("certificate",Text.decodeUtf8(CertifiedData.getCertificate()!)!)];
       status_code:=200;
     };
     return {
