@@ -14,11 +14,6 @@ module {
   public type ChunkData = Blob;
 
   public type ChunkId = Text; 
-
-  public type ChunkNum = {
-    #text_chunknum:Text;
-    #nat_chunknum:Nat;
-  };
   
 
   public type FileInfo = {
@@ -27,6 +22,7 @@ module {
     name: Text;
     size: Nat;
     filetype: Text;
+    contentDisposition: Text;
   }; 
 
   public type FileData = {
@@ -38,6 +34,7 @@ module {
     name: Text;
     size: Nat;
     filetype: Text;
+    contentDisposition: Text;
   };
 
   public type FileUploadResult = {
@@ -49,9 +46,9 @@ module {
     getSize : shared () -> async Nat;
     putFileChunk : shared (FileId, Nat, Blob) -> async ?Principal;
     putFileInfo : shared FileInfo -> async ?FileUploadResult;
-    getFileChunk: shared (FileId, ChunkNum, Principal) -> async ?Blob;
+    getFileChunk: shared (FileId, Nat, Principal) -> async ?Blob;
     getFileInfo: shared (FileId, Principal) -> async ?FileData;
-    delFileChunk : shared (FileId, ChunkNum, Principal) -> async ();
+    delFileChunk : shared (FileId, Nat, Principal) -> async ();
     delFileInfo : shared (FileId, Principal) -> async ();
     getAllFiles : shared () -> async [FileData];
   };
@@ -74,8 +71,9 @@ module {
 
   public type StreamingCallbackToken = {
     content_encoding : Text;
-    index : Nat;
-    key : Text;
+    fileId : FileId;
+    chunkNum : Nat; //starts at 1
+    totalChunks: Nat;
   };
 
   public type StreamingCallbackResponse = {
@@ -85,6 +83,26 @@ module {
 
   public type StreamingCallback = query (StreamingCallbackToken) -> async (StreamingCallbackResponse);
 
+
+  // streaming strategy is a recursive operation
+  /*
+  http_request response:
+  {
+    status_code, 
+    headers, 
+    body=chunkN,
+    streamingStrategy={
+      StreamingCallbackToken tokenN,
+      callback = (token(N))-> StreamingCallbackResponse {
+        Blob body=chunkN+1,
+        StreamingCallbackToken tokenN+1|null if last chunk
+      }
+    }
+  }
+  
+  client in browser will call an http request that effectively calls callback(token(N)), callback(token(N+1)), ...
+
+  */
   public type StreamingStrategy = {
     #Callback: {
       callback : StreamingCallback;

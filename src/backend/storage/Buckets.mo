@@ -10,7 +10,6 @@ import Debug "mo:base/Debug";
 import Prim "mo:prim";
 import Buffer "mo:base/Buffer";
 import Cycles "mo:base/ExperimentalCycles";
-import CertifiedData "mo:base/CertifiedData";
 import Iter "mo:base/Iter";
 import Text "mo:base/Text";
 import Nat16 "mo:base/Nat16";
@@ -22,9 +21,12 @@ actor class Bucket () = this {
   type FileData = Types.FileData;
   type ChunkId = Types.ChunkId;
   type State = Types.State;
-  type ChunkNum = Types.ChunkNum;
   type HttpRequest = Types.HttpRequest;
   type HttpResponse = Types.HttpResponse;
+  type StreamingCallbackToken = Types.StreamingCallbackToken;
+  type StreamingCallbackResponse = Types.StreamingCallbackResponse;
+  type StreamingStrategy = Types.StreamingStrategy;
+
 
   var state = Types.empty();
   let limit = 20_000_000_000_000;
@@ -64,47 +66,43 @@ actor class Bucket () = this {
     n
   };
 
-  func createFileInfo(fileId: Text, fi: FileInfo) : ?FileId {
+  func createFileInfo(fileId: Text, ownerId:Principal, fi: FileInfo) : ?FileId {
           switch (state.files.get(fileId)) {
               case (?_) { /* error -- ID already taken. */ null }; 
               case null { /* ok, not taken yet. */
                   Debug.print("id is..." # debug_show(fileId));   
                   state.files.put(fileId,
-                                      {
-                                          fileId = fileId;
-                                          cid = Principal.fromActor(this);
-                                          name = fi.name;
-                                          createdAt = fi.createdAt;
-                                          uploadedAt = Time.now();
-                                          chunkCount = fi.chunkCount;
-                                          size = fi.size ;
-                                          filetype = fi.filetype;
-                                      }
+                    {
+                        fileId = fileId;
+                        cid = ownerId;
+                        name = fi.name;
+                        createdAt = fi.createdAt;
+                        uploadedAt = Time.now();
+                        chunkCount = fi.chunkCount;
+                        size = fi.size ;
+                        filetype = fi.filetype;
+                        contentDisposition = fi.contentDisposition;
+                    }
                   );
                   ?fileId
               };
           }
   };
 
-  public func putFile(fi: FileInfo) : async ?FileId {
+  public shared (msg) func putFile(fi: FileInfo) : async ?FileId {
     do ? {
       // append 2 bytes of entropy to the name
       let fileId = await generateRandom(fi.name);
-      createFileInfo(fileId, fi)!;
+      createFileInfo(fileId, msg.caller, fi)!;
     }
   };
 
-  func chunkId(fileId : FileId, chunkNum : ChunkNum) : ChunkId {
-    // awkward workaround because there's no Text.parseNat()
-      let chunkNumText:Text=switch chunkNum {
-        case (#text_chunknum(x)){x};
-        case (#nat_chunknum(x)){Nat.toText(x)};
-      };
-      fileId # chunkNumText
+  func chunkId(fileId : FileId, chunkNum : Nat) : ChunkId {
+      fileId # Nat.toText(chunkNum)
   };
   // add chunks 
   // the structure for storing blob chunks is to unse name + chunk num eg: 123a1, 123a2 etc
-  public func putChunk(fileId : FileId, chunkNum : ChunkNum, chunkData : Blob) : async ?() {
+  public func putChunk(fileId : FileId, chunkNum : Nat, chunkData : Blob) : async ?() {
     do ? {
       Debug.print("generated chunk id is " # debug_show(chunkId(fileId, chunkNum)) # " from "  #   debug_show(fileId) # " and " # debug_show(chunkNum)  #"  and chunk size..." # debug_show(Blob.toArray(chunkData).size()) );
       state.chunks.put(chunkId(fileId, chunkNum), chunkData);
@@ -123,6 +121,7 @@ actor class Bucket () = this {
             filetype = v.filetype;
             createdAt = v.createdAt;
             uploadedAt = v.uploadedAt;
+            contentDisposition = v.contentDisposition;
           }
       }
   };
@@ -133,11 +132,11 @@ actor class Bucket () = this {
     }
   };
 
-  public query func getChunks(fileId : FileId, chunkNum: ChunkNum) : async ?Blob {
+  public query func getChunks(fileId : FileId, chunkNum: Nat) : async ?Blob {
       state.chunks.get(chunkId(fileId, chunkNum))
   };
 
-  public func delChunks(fileId : FileId, chunkNum : ChunkNum) : async () {
+  public func delChunks(fileId : FileId, chunkNum : Nat) : async () {
         state.chunks.delete(chunkId(fileId, chunkNum));
   };
 
@@ -167,38 +166,80 @@ actor class Bucket () = this {
 
   // To do: https://github.com/DepartureLabsIC/non-fungible-token/blob/1c183f38e2eea978ff0332cf6ce9d95b8ac1b43d/src/http.mo
 
-  public query func http_request(req: HttpRequest) : async HttpResponse {
-    // url format: <canisterid>.raw.ic0.app/storage?fileId=<fileId>&<fileId>&chunkNum=<chunkNum>
-    // http://<canisterId>.127.0.0.1:8453/storage?fileId=testfile.txt25&chunkNum=1
-    // assume most images are only 1 chunk, so this will suffice for a profile picture or something
-    // for later: output an httpstream, so we can load videos and progressive jpegwith a single link!
-    var status_code=404;
-    var headers = [("Content-Type","text/html")];
+
+
+  public query func streamingCallback(token:StreamingCallbackToken): async StreamingCallbackResponse {
+    Debug.print("Returning callback...");
     var body:Blob = "404 Not Found";
+    var next_token:?StreamingCallbackToken = null;
+    let nextChunkNum:Nat = token.chunkNum+1;
+    let _ = do ? {
+      body := state.chunks.get(chunkId(token.fileId, token.chunkNum))!;
+      // 5 chunks, count will be 1,2,3,4,5 (starts at 1)
+      if (nextChunkNum <= token.totalChunks) {
+        next_token := ?{
+          content_encoding=token.content_encoding;
+          fileId = token.fileId;
+          chunkNum = nextChunkNum;
+          totalChunks = token.totalChunks;
+        };
+      }
+    };
+
+    {
+      body=body;
+      token=next_token;
+    };
+  };
+
+
+  public query func http_request(req: HttpRequest) : async HttpResponse {
+    // url format: raw.ic0.app/storage?canisterId=<bucketId>&fileId=<fileId>&<fileId>
+    // http://127.0.0.1:8000/storage?canisterId=<bucketId>&fileId=testfile.txt25
+    // or if we want to stream all chunks:
+    // http://127.0.0.1:8000/storage?canisterId=<bucketId>&fileId=<fileId>
+    var _status_code=404;
+    var _headers = [("Content-Type","text/html"), ("Content-Disposition","inline")];
+    var _body:Blob = "404 Not Found";
+    var _streaming_strategy:?StreamingStrategy = null;
     let _ = do ? { // is this possible without assignment
       let storageParams:Text = Text.stripStart(req.url, #text("/storage?"))!;
       let fields:Iter.Iter<Text> = Text.split(storageParams, #text("&"));
       var fileId:?FileId=null;
-      var chunkNum:?ChunkNum=null;
+      var _chunkNum:Nat=1;
       for (field:Text in fields){
         let kv:[Text] = Iter.toArray<Text>(Text.split(field,#text("=")));
         if (kv[0]=="fileId"){
           fileId:=?kv[1];
         }
-        else if (kv[0]=="chunkNum"){
-          chunkNum:=?#text_chunknum(kv[1]);
-        }
       };
       let fileData:FileData = getFileInfoData(fileId!)!;
-      body := state.chunks.get(chunkId(fileId!, chunkNum!))!;
-      headers := [("Content-Type",fileData.filetype), ("Content-Length",Nat.toText(fileData.size)),("certificate",Text.decodeUtf8(CertifiedData.getCertificate()!)!)];
-      status_code:=200;
+      Debug.print("ContentDisposition is " # fileData.contentDisposition);
+      _body := state.chunks.get(chunkId(fileId!, _chunkNum))!;
+      _headers := [
+        ("Content-Type",fileData.filetype),
+        ("Content-Length",Nat.toText(fileData.size-1)),
+        ("Content-Disposition",fileData.contentDisposition)
+      ];
+      _status_code:=200;
+      if (fileData.chunkCount > 1){
+        _streaming_strategy := ?#Callback({
+          token = {
+            content_encoding="gzip";
+            fileId=fileId!;
+            chunkNum=_chunkNum; //starts at 1
+            totalChunks=fileData.chunkCount;
+          };
+          callback = streamingCallback;
+        });
+      };
+
     };
     return {
-      status_code=Nat16.fromNat(status_code);
-      headers=headers;
-      body=body;
-      streaming_strategy=null;
+      status_code=Nat16.fromNat(_status_code);
+      headers=_headers;
+      body=_body;
+      streaming_strategy=_streaming_strategy;
     };
   };
 

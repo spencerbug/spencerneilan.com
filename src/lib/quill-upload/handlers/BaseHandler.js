@@ -1,5 +1,4 @@
 import Constants from "../utils/Constants";
-
 class BaseHandler {
     constructor(quill, options) {
         
@@ -12,7 +11,9 @@ class BaseHandler {
         }
     }
 
-    static id=0
+    fileChanged() {
+        console.error("Cannot call base class BadeHandler.fileChanged()");
+    }
 
     applyForToolbar() {
         var toolbar = this.quill.getModule("toolbar")
@@ -20,39 +21,42 @@ class BaseHandler {
     }
 
     selectLocalFile() {
-        this.range = this.quill.getSelection()
+        this.range = this.quill.getSelection();
         this.fileHolder = document.createElement("input")
         this.fileHolder.setAttribute("type","file")
         this.fileHolder.onchange = this.fileChanged.bind(this)
+        this.fileHolder.click();
     }
 
     loadFile(context) {
         // set loading state
         const file = context.fileHolder.files[0]
-        this.handlerId = `${Constants.HANDLER_PREFIX}-${BaseHandler.id}`
-        BaseHandler.id+=1
-        const fileReader = new FileReader()
-        fileReader.addEventListener(
-            "load",
-            () => {
-                this.insertBase64Data(this.handlerId)
-            }, 
-            false
-        )
-        if (!file) {
-            console.warn("[File not found] Something was wrong")
-            return
-        }
-
-        fileReader.readAsDataURL(file)
+        this.insertLoadingIcon()
 
         return file
+    }
+
+    insertLoadingIcon(){
+        console.log("insertLoadingIcon")
+        const range = this.range
+        this.quill.insertEmbed(
+            range.index,
+            'image',
+            "/loading_duck.gif"
+        )
+        const el = document.querySelectorAll('[src="/loading_duck.gif"]')[0]
+        if (el) {
+            el.setAttribute('class', Constants.QUILL_UPLOAD_LOADING_ICON_CLASSNAME)
+            el.setAttribute('width', '50px')
+            el.setAttribute('height', '50px')
+        }
     }
 
     embedFile(file) {
         this.options.upload(file).then(
             value => {
-                this.insertFileToEditor(value)
+                console.log(value)
+                this.replaceFileToEditor(value)
             },
             error => {
                 console.warn(error.message)
@@ -60,23 +64,18 @@ class BaseHandler {
         )
     }
 
-    insertBase64Data(url) {
-        const range = this.range
+    replaceFileToEditor(val) {
+        
         this.quill.insertEmbed(
-            range.index,
+            this.range.index,
             this.handlerName,
-            `${this.handlerId}${Constants.ID_SPLIT_FLAG}${url}`
+            val
         )
-
-        const el = document.getElementById(this.handlerId)
-    }
-
-    insertFileToEditor(url) {
-        const el = document.getElementById(this.handlerId)
-        if (el) {
-            el.setAttribute("src", url)
-            el.removeAttribute("id")
-            el.removeAttribute("class")
+        
+        // remove the loading icon
+        const els = document.getElementsByClassName(Constants.QUILL_UPLOAD_LOADING_ICON_CLASSNAME)
+        for (const el of els){
+            el.remove()
         }
     }
 

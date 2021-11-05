@@ -43,7 +43,7 @@
     <NavbarToggler on:click={() => (isOpen = !isOpen)} />
     <Collapse {isOpen} navbar expand="md" on:update={handleUpdate}>
         <Nav class="me-auto" navbar>
-        <NavItem><NavLink href="#">Home</NavLink></NavItem>
+        <NavItem><NavLink href="#/">Home</NavLink></NavItem>
         <NavItem><NavLink href="#/projects">Projects</NavLink></NavItem>
         <NavItem><NavLink href="#/blog">Blog</NavLink></NavItem>
         <NavItem><NavLink href="#/resume">Resume</NavLink></NavItem>

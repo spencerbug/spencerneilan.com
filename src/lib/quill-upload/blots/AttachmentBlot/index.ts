@@ -1,23 +1,28 @@
 import Quill from "quill"
 import Constants from "../../utils/Constants";
 let Link = Quill.import("formats/link")
-let Icons = Quill.import('ui/icons');
 import type { UploadResult } from '../../../contentStore'
 
-class Attachment extends Link {
+class AttachmentBlot extends Link {
     /**
      * value must be: object of value.id, value.text, value.url
      */
-    blotName:string
-    static create(value:UploadResult) : Node {
+    static create(value: UploadResult|string) {
         let url;
         let linktext;
         let id;
         let node;
-
-        url = value.url? value.url : '#'
-        linktext = value.text? value.text : 'attachment'
-        id = value.id
+        
+        if (typeof value === 'object'){
+            url = value.url? value.url : '#'
+            linktext = value.text? value.text : 'attachment'
+            id = value.id
+        }
+        else {
+            url = value
+            linktext = value
+        }
+        
 
         node = super.create(url)
 
@@ -35,16 +40,14 @@ class Attachment extends Link {
     }
 }
 // @ts-ignore
-Attachment.blotName = Constants.blots.attachment
+AttachmentBlot.blotName = Constants.blots.attachment
 // @ts-ignore
-Attachment.tagName = 'A'
+AttachmentBlot.tagName = 'A'
 // @ts-ignore
-Attachment.className = 'ql-attachment'
+AttachmentBlot.className = 'ql-attachment'
 
 
-Icons['attachments'] = Quill.import("assets/icons/attachment.svg")
-
-Quill.register(Attachment)
+Quill.register(AttachmentBlot)
 
 
-export default Attachment
+export default AttachmentBlot

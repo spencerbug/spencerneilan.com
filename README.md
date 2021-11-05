@@ -36,6 +36,13 @@ paste the last line above into .env.development in this project
 dfx deploy
 ```
 
+You need to start ic-proxy for HTTP interface
+
+``` bash
+icx-proxy --address 127.0.0.1:8453 -vv &
+icxproxypid=$!
+```
+
 This template should help get you started developing with Svelte and TypeScript in Vite.
 
 ## Recommended IDE Setup

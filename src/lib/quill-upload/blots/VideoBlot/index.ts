@@ -5,17 +5,23 @@ import type { UploadResult } from '../../../contentStore'
 
 let BlockEmbed = Quill.import("blots/embed")
 
-class Video extends BlockEmbed {
+class VideoBlot extends BlockEmbed {
     /**
      * value must be object of value.id, value.src
      */
-    static create(value:UploadResult) {
+    static create(value:UploadResult|string) {
         let id;
         let src;
         let node;
 
-        id = value.id
-        src = value.url? value.url : '#'
+        if (typeof value === 'object'){
+            id = value.id
+            src = value.url? value.url : '#'
+        }
+        else {
+            src = value
+        }
+        
 
         node = super.create(src)
 
@@ -63,12 +69,12 @@ class Video extends BlockEmbed {
     }
 }
 // @ts-ignore
-Video.tagName = "iframe";
+VideoBlot.tagName = "iframe";
 // @ts-ignore
-Video.blotName = Constants.blots.video
+VideoBlot.blotName = Constants.blots.video
 // @ts-ignore
-Video.className = 'quill-upload-video'
+VideoBlot.className = 'quill-upload-video'
 
-Quill.register(Video);
+Quill.register(VideoBlot);
 
-export default Video;
+export default VideoBlot;

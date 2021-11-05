@@ -1,3 +1,3 @@
-export { default as Image } from "./image";
-export { default as Video } from "./video";
-export { default as Attachment } from "./attachment";
+export { default as ImageBlot } from "./ImageBlot";
+export { default as VideoBlot } from "./VideoBlot";
+export { default as AttachmentBlot } from "./AttachmentBlot";

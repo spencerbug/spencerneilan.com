@@ -3,17 +3,22 @@ import Constants from "../../utils/Constants";
 let BlockEmbed = Quill.import("blots/embed")
 import type { UploadResult } from '../../../contentStore'
 
-class Image extends BlockEmbed {
+class ImageBlot extends BlockEmbed {
     /**
      * value must be: object of value.id, value.src
      */
-    static create(value:UploadResult) {
+    static create(value:UploadResult|string) {
         let id;
         let src;
         let node;
 
-        id = value.id
-        src = value.url? value.url : '#'
+        if (typeof value === 'object'){
+            id = value.id
+            src = value.url? value.url : '#'
+        }
+        else {
+            src = value
+        }
 
         node = super.create(src)
 
@@ -33,12 +38,12 @@ class Image extends BlockEmbed {
 }
 
 // @ts-ignore
-Image.blotName = Constants.blots.video
+ImageBlot.blotName = Constants.blots.video
 // @ts-ignore
-Image.tagName = 'img'
+ImageBlot.tagName = 'img'
 // @ts-ignore
-Image.className = 'ql-image'
+ImageBlot.className = 'ql-image'
 
-Quill.register(Image)
+Quill.register(ImageBlot)
 
-export default Image
+export default ImageBlot

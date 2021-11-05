@@ -212,12 +212,12 @@ shared ({caller = owner}) actor class Container() = this {
   // persist chunks in bucket
   public func putFileChunk(fileId: FileId, chunkNum : Nat, chunkData : Blob) : async Principal {
     let b : Bucket = await getEmptyBucket(?chunkData.size());
-    let _ = await b.putChunk(fileId, #nat_chunknum(chunkNum), chunkData);
+    let _ = await b.putChunk(fileId, chunkNum, chunkData);
     return Principal.fromActor(b);
   };
 
   // save file info 
-  public func putFileInfo(fi: FileInfo) : async ?FileUploadResult {
+  public shared(msg) func putFileInfo(fi: FileInfo) : async ?FileUploadResult {
     do ? {
       let b: Bucket = await getEmptyBucket(?fi.size);
       Debug.print("creating file info..." # debug_show(fi));
@@ -255,7 +255,7 @@ shared ({caller = owner}) actor class Container() = this {
   public func getFileChunk(fileId : FileId, chunkNum : Nat, cid: Principal) : async ?Blob {
     do ? {
       let b : Bucket = (getBucket(cid))!;
-      return await b.getChunks(fileId, #nat_chunknum(chunkNum));
+      return await b.getChunks(fileId, chunkNum);
     }   
   };
 
@@ -271,7 +271,7 @@ shared ({caller = owner}) actor class Container() = this {
   public func delFileChunk(fileId: FileId, chunkNum : Nat, cid: Principal) : async ?() {
       do ? {
           let b : Bucket = (getBucket(cid))!;
-          let _ = await b.delChunks(fileId, #nat_chunknum(chunkNum));
+          let _ = await b.delChunks(fileId, chunkNum);
       }
   };
 
@@ -301,8 +301,12 @@ shared ({caller = owner}) actor class Container() = this {
     buff.toArray()
   };  
 
-  public shared({caller = caller}) func wallet_receive() : async () {
+  public shared(msg) func wallet_receive() : async () {
     ignore Cycles.accept(Cycles.available());
+  };
+
+  public shared(msg) func wallet_balance() : async Nat {
+    return Cycles.balance();
   };
 };
 
