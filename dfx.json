@@ -1,12 +1,18 @@
 {
   "canisters": {
-    "accounts": {
-      "main": "src/backend/accounts/main.mo",
-      "type": "motoko"
-    },
     "storage": {
       "main":"src/backend/storage/Container.mo",
       "type":"motoko"
+    },
+    "graphql": {
+      "type": "custom",
+      "build": "cargo build --target wasm32-unknown-unknown --package graphql --release",
+      "candid": "src/backend/graphql/src/graphql.did",
+      "wasm": "target/wasm32-unknown-unknown/release/graphql.wasm"
+    },
+    "playground": {
+      "type": "assets",
+      "source": ["src/backend/playground/build"]
     },
     "assets": {
       "dependencies": [
@@ -20,11 +26,6 @@
         "dist/"
       ],
       "type": "assets"
-    }
-  },
-  "defaults": {
-    "build": {
-      "packtool": ""
     }
   },
   "dfx": "0.8.1",

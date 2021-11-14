@@ -5,8 +5,6 @@ import type { FileInfo, FileId, FileUploadResult, _SERVICE } from "../backend/st
 import type { Principal } from '@dfinity/principal';
 
 export const s_uploadPostLoading = writable(false)
-export const s_currentDraft = writable("")
-export const s_currentTitle = writable("")
 
 export interface UploadResult {
     url: string,
@@ -62,27 +60,3 @@ export const uploadFile = async (file:File):Promise<UploadResult> => {
 }
 
 
-
-
-
-
-// information we need:
-/* 
-Principal, title, article HTML, 
-we don't want to be currently uploading a file
-delete the old copy, and upload the newcopy
-Or we can upload the deltas
-*/
-export const publishDraft = async () => {
-
-    let htmlFile:File = new File(
-        [new Blob([get(s_currentDraft)], {type: 'text/html'})],
-        `${get(s_currentTitle)}.html`,
-    )
-    let result:UploadResult = await uploadFile(htmlFile)
-    
-}
-
-export const loadDraft = async () => {
-
-}

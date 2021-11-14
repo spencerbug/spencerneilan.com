@@ -3,9 +3,9 @@
     import { writable, get } from "svelte/store";
     import {AttachmentHandler} from "../lib/quill-upload"
     // import {ImageHandler, VideoHandler, AttachmentHandler } from "../lib/quill-upload";
-    import { uploadFile, publishDraft, loadDraft, s_currentDraft, s_currentTitle } from "../lib/contentStore";
+    import {uploadFile} from "../lib/storageStore";
+    import {s_draftTitle, s_draft, publishDraft} from "../lib/draftStore"
     import { Form, FormGroup, Button, Input, Label } from 'sveltestrap'
-
   
     let editor
 
@@ -74,7 +74,7 @@
         }
 
         quill.on("text-change", function(delta, oldDelta, source){
-            s_currentDraft.set(quill.container.firstChild.innerHTML)
+            s_draft.set(quill.container.firstChild.innerHTML)
         })
 
         quill.root.addEventListener('dragover', function(event){
@@ -113,17 +113,17 @@
   
   <form on:submit|preventDefault={async event => await publishDraft()}>
       <FormGroup>
-          <Input type="text" bind:value={$s_currentTitle} id="title" placeholder="Title" required={true}/>
+          <Input type="text" bind:value={$s_draftTitle} id="title" placeholder="Title" required={true}/>
       </FormGroup>
       <FormGroup>
         <div class="editor-wrapper">
             <div class="editor" id="quill-editor">
-                <!-- {#if $isDragging}
+                {#if $isDragging}
                     <p style="color:black">Place file here</p>
-                {/if} -->
+                {/if}
             </div>
             <div id="preview">
-                {@html $s_currentDraft}
+                {@html $s_draft}
             </div>
         </div>
       </FormGroup>

@@ -7,7 +7,7 @@
   import Resume from './pages/Resume.svelte'
   import {Spinner, Container} from 'sveltestrap'
   import { onMount } from 'svelte';
-  import {s_dataLoading, s_authLoading, authInit} from './lib/authStore'
+  import {s_authDataLoading, authInit} from './lib/authStore'
   import Router from 'svelte-spa-router'
 
 
@@ -25,7 +25,7 @@
 <main>
   <Nav/>
   <Container>
-    {#if $s_dataLoading}
+    {#if $s_authDataLoading}
     <h1><Spinner color="info"/></h1>
     {:else}
     <Router routes={{

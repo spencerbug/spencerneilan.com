@@ -1,13 +1,13 @@
 <script>
     // import {createEventDispatcher} from 'svelte'
     import { Form, FormGroup, Button, Input, Label } from 'sveltestrap'
-    import {s_myAccount, handleRegister, s_hasAccount } from "../lib/authStore"
+    import {s_myAccount, s_hasAccount, registerOrUpdateMyAccount } from "../lib/authStore"
     
 
     
 </script>
 
-<form on:submit|preventDefault={async event => await handleRegister()}>
+<form on:submit|preventDefault={async event => await registerOrUpdateMyAccount()}>
     <FormGroup>
         <Label for="firstName">First Name</Label>
         <Input type="text" bind:value={$s_myAccount.firstName} id="firstName"/>

@@ -1,7 +1,7 @@
 import Quill from "quill"
 import Constants from "../../utils/Constants";
 let BlockEmbed = Quill.import("blots/embed")
-import type { UploadResult } from '../../../contentStore'
+import type { UploadResult } from '../../../storageStore'
 
 class ImageBlot extends BlockEmbed {
     /**

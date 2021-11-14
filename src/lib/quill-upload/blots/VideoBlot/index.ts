@@ -1,6 +1,6 @@
 import Quill from 'quill'
 import Constants from '../../utils/Constants';
-import type { UploadResult } from '../../../contentStore'
+import type { UploadResult } from '../../../storageStore'
 // import BlockEmbed from 'quill/blots/embed'
 
 let BlockEmbed = Quill.import("blots/embed")

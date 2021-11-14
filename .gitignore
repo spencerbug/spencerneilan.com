@@ -6,3 +6,5 @@ dist-ssr
 .dfx
 ./testfile.txt
 src/backend/storage_dht/*
+target
+package-lock.json

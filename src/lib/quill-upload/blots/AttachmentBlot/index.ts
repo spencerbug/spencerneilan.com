@@ -1,7 +1,7 @@
 import Quill from "quill"
 import Constants from "../../utils/Constants";
 let Link = Quill.import("formats/link")
-import type { UploadResult } from '../../../contentStore'
+import type { UploadResult } from '../../../storageStore'
 
 class AttachmentBlot extends Link {
     /**
