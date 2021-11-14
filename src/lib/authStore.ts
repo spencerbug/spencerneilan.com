@@ -7,7 +7,6 @@ import {idlFactory as storage_idl} from "dfx-generated/storage"
 import {push} from 'svelte-spa-router'
 import { GraphqlClient } from "./graphqlClient";
 
-
 // authStore should be called first before contentStore, since this file declares the actors
 
 export const s_authLoading = writable(false)
