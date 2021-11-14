@@ -1,35 +1,46 @@
 
 # spencerneilan.com
+
 ## Written with svelte + typescript + vite
 
 # start dfx Identity Server
-You will need dfx. 
-```
-DFX_VERSION=0.7.0 sh -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)"
 
+You will need dfx.
+
+``` bash
+DFX_VERSION=0.8.1 sh -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)"
 ```
 
 go to internet-identity project directory. You can get it from https://github.com/dfinity/internet-identity.git:
+
 ```bash
 dfx start --background --clean --host=0.0.0.0:8000
-
 II_ENV=development dfx deploy --no-wallet --argument '(null)'
 ```
 
-open .dfx/local/canister_ids/json
+open .dfx/local/canister_ids.json
 and copy he internet_identity canister id
 go through the following transformations:
-```
+
+``` bash
 http://{canisters.internet-identity.id}.localhost:8000/
 
 http://rwlgt-iiaaa-aaaaa-aaaaa-cai.localhost:8000/
 
 INTERNET_IDENTITY_URL=http://rwlgt-iiaaa-aaaaa-aaaaa-cai.localhost:8000/
 ```
-paste the last line above into .env in this project
 
-```
+paste the last line above into .env.development in this project
+
+``` bash
 dfx deploy
+```
+
+You need to start ic-proxy for HTTP interface
+
+``` bash
+icx-proxy --address 127.0.0.1:8453 -vv &
+icxproxypid=$!
 ```
 
 This template should help get you started developing with Svelte and TypeScript in Vite.

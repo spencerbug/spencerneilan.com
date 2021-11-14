@@ -4,3 +4,7 @@ dist
 dist-ssr
 *.local
 .dfx
+./testfile.txt
+src/backend/storage_dht/*
+target
+package-lock.json

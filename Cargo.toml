@@ -1,0 +1,8 @@
+[workspace]
+members = [
+    "src/backend/graphql",
+]
+
+[profile.release]
+lto = true
+opt-level = 'z'

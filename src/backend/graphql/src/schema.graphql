@@ -1,0 +1,39 @@
+# type SudographSettings {
+#     exportGeneratedMutationFunction: false
+# }
+
+type Account {
+    id: ID! #ID is principal for account
+    firstName: String!
+    lastName: String
+    company: String
+    companyPosition: String
+    email: String
+    imgUrl: String
+    articles: [Article!]! @relation(name: "Account:articles and Article:author")
+    comments: [Comment!]! @relation(name: "Account:comments and Comment:author")
+}
+
+type Tag {
+    id: ID!
+    name: String!
+}
+
+type Comment {
+    id: ID!
+    author: Account! @relation(name: "Account:comments and Comment:author")
+    article: Article! @relation(name: "Article:comments and Comment:author")
+    text: String!
+}
+
+type Article {
+    id: ID!
+    articleUrl: String
+    title: String!
+    publishedAt: Date
+    description: String
+    thumbnailUrl: String
+    tags: [Tag!]
+    comments: [Comment!]! @relation(name: "Article:comments and Comment:author")
+    author: Account! @relation(name: "Account:articles and Article:author")
+}

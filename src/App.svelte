@@ -1,36 +1,42 @@
 <script lang="ts">
-  import logo from './assets/logo.svg'
   import Nav from './components/Nav.svelte'
-  import Register from './components/Register.svelte'
-  import Home from './components/Home.svelte'
-  import Projects from './components/Projects.svelte'
-  import {Styles} from 'sveltestrap'
+  import Register from './pages/Register.svelte'
+  import Home from './pages/Home.svelte'
+  import Blog from './pages/Blog.svelte'
+  import Projects from './pages/Projects.svelte'
+  import Resume from './pages/Resume.svelte'
+  import {Spinner, Container} from 'sveltestrap'
   import { onMount } from 'svelte';
-  import {s_dataLoading, s_authLoading, authInit} from './lib/authStore'
+  import {s_authDataLoading, authInit} from './lib/authStore'
   import Router from 'svelte-spa-router'
+
 
 
   onMount(async () => {
     await authInit()
   })
 
+  // const prefix = `/${process.env["VITE_APP_ASSETS_CANISTER_ID"]}}`
+
 </script>
 
-<Styles/>
+<!-- <Styles/> -->
 
 <main>
   <Nav/>
-  {#if $s_dataLoading}
-  <h1>Loading submission...</h1>
-  {:else if $s_authLoading}
-  <h1>Loading auth...</h1>
-  {:else}
-  <Router routes={{
-    '/': Home,
-    '/register': Register,
-    '/projects': Projects,
-  }}/>
-  {/if}
+  <Container>
+    {#if $s_authDataLoading}
+    <h1><Spinner color="info"/></h1>
+    {:else}
+    <Router routes={{
+      '/': Home,
+      '/register': Register,
+      '/projects': Projects,
+      '/blog':Blog,
+      '/resume':Resume
+    }}/>
+    {/if}
+  </Container>
 </main>
 
 <style>
@@ -45,24 +51,11 @@
     margin: 0 auto;
   }
 
-  img {
-    height: 16rem;
-    width: 16rem;
-  }
-
-  p {
-    max-width: 14rem;
-    margin: 1rem auto;
-    line-height: 1.35;
-  }
 
   @media (min-width: 480px) {
     h1 {
       max-width: none;
     }
 
-    p {
-      max-width: none;
-    }
   }
 </style>

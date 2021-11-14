@@ -1,5 +1,5 @@
 <script lang="ts">
-    import {s_isLoggedIn, s_hasAccount, s_myAccount, handleLogin, handleLogout} from '../lib/authStore'
+    import {s_isLoggedIn, s_hasAccount, s_myAccount, handleLogin, handleLogout, s_authLoading} from '../lib/authStore'
     import {
         Collapse,
         Navbar,
@@ -11,7 +11,8 @@
         Dropdown,
         DropdownToggle,
         DropdownMenu,
-        DropdownItem} from 'sveltestrap'
+        DropdownItem,
+        Spinner} from 'sveltestrap'
 
     let isOpen = false;
     function handleUpdate(event) {
@@ -37,15 +38,20 @@
     }
 </style>
 
-<Navbar color="light" light expand="md">
-    <NavbarBrand href="/#">Spencer Neilan</NavbarBrand>
+<Navbar color="primary" class="navbar-dark" light expand="md">
+    <NavbarBrand href="#">Spencer Neilan</NavbarBrand>
     <NavbarToggler on:click={() => (isOpen = !isOpen)} />
     <Collapse {isOpen} navbar expand="md" on:update={handleUpdate}>
         <Nav class="me-auto" navbar>
-        <NavItem><NavLink href="/#">Home</NavLink></NavItem>
-        <NavItem><NavLink href="/#/projects">Projects</NavLink></NavItem>
+        <NavItem><NavLink href="#/">Home</NavLink></NavItem>
+        <NavItem><NavLink href="#/projects">Projects</NavLink></NavItem>
+        <NavItem><NavLink href="#/blog">Blog</NavLink></NavItem>
+        <NavItem><NavLink href="#/resume">Resume</NavLink></NavItem>
         </Nav>
         <Nav class="ms-auto" navbar>
+        {#if $s_authLoading}
+        <Spinner color="info"/>
+        {/if}
         {#if !$s_isLoggedIn}
             <NavItem>
                 <NavLink on:click={async () => await handleLogin()}>
@@ -60,7 +66,7 @@
                 <DropdownToggle nav caret>Hello, stranger! Please Register</DropdownToggle>
                 {/if}
                 <DropdownMenu end>
-                    <DropdownItem href="/#/register">My Account</DropdownItem>
+                    <DropdownItem href="#/register">My Account</DropdownItem>
                     <DropdownItem divider/>
                     <DropdownItem on:click={async () => await handleLogout()}>Logout</DropdownItem>
                 </DropdownMenu>
