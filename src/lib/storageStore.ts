@@ -12,8 +12,17 @@ export interface UploadResult {
     text: string
 }
 
-export const uploadFile = async (file:File):Promise<UploadResult> => {
+export const uploadImage = async (file:File):Promise<UploadResult> => {
+    return uploadFile(file, 'inline')
+}
+
+export const uploadVideo = async (file:File):Promise<UploadResult> => {
+    return uploadFile(file, 'inline')
+}
+
+export const uploadFile = async (file:File, contentDisposition=''):Promise<UploadResult> => {
     let storageActor:_SERVICE = get(s_storageActor)
+    // debugger;
     let max_chunk_size=1900000
     let numChunks = BigInt(Math.ceil(file.size / max_chunk_size))
     let value = {
@@ -22,13 +31,18 @@ export const uploadFile = async (file:File):Promise<UploadResult> => {
         text: 'attachment'
     }
     //upload file information
+    // debugger
     let urlEncodedName = encodeURIComponent(file.name)
+    if (!contentDisposition) {
+        contentDisposition = `attachment; filename="${file.name}"`
+    }
     let fileInfo:FileInfo = {
         name: urlEncodedName,
         createdAt: BigInt(file.lastModified),
         size: BigInt(file.size),
         chunkCount: numChunks,
-        filetype: file.type 
+        filetype: file.type,
+        contentDisposition
     }
     let result:[]|[FileUploadResult]=await storageActor.putFileInfo(fileInfo)
     if (result.length == 0) {return value}

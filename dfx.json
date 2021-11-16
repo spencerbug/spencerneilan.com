@@ -16,7 +16,6 @@
     },
     "assets": {
       "dependencies": [
-        "accounts",
         "storage"
       ],
       "frontend": {

@@ -23,10 +23,12 @@ export interface Container {
     ) => Promise<Principal>,
   'putFileInfo' : (arg_0: FileInfo) => Promise<[] | [FileUploadResult]>,
   'updateStatus' : () => Promise<undefined>,
+  'wallet_balance' : () => Promise<bigint>,
   'wallet_receive' : () => Promise<undefined>,
 }
 export interface FileData {
   'cid' : Principal,
+  'contentDisposition' : string,
   'name' : string,
   'createdAt' : Timestamp,
   'size' : bigint,
@@ -38,6 +40,7 @@ export interface FileData {
 export type FileId = string;
 export type FileId__1 = string;
 export interface FileInfo {
+  'contentDisposition' : string,
   'name' : string,
   'createdAt' : Timestamp,
   'size' : bigint,

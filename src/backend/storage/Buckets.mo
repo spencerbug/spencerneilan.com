@@ -13,6 +13,7 @@ import Cycles "mo:base/ExperimentalCycles";
 import Iter "mo:base/Iter";
 import Text "mo:base/Text";
 import Nat16 "mo:base/Nat16";
+import TrieMap "mo:base/TrieMap";
 
 actor class Bucket () = this {
 
@@ -20,15 +21,59 @@ actor class Bucket () = this {
   type FileInfo = Types.FileInfo;
   type FileData = Types.FileData;
   type ChunkId = Types.ChunkId;
+  type ChunkData = Types.ChunkData;
   type State = Types.State;
+  type StableState = Types.StableState;
   type HttpRequest = Types.HttpRequest;
   type HttpResponse = Types.HttpResponse;
   type StreamingCallbackToken = Types.StreamingCallbackToken;
   type StreamingCallbackResponse = Types.StreamingCallbackResponse;
   type StreamingStrategy = Types.StreamingStrategy;
 
+  private func deserializeState(s:StableState):State {
+    {
+      files = TrieMap.fromEntries<FileId, FileData>(
+        Iter.fromArray<(FileId, FileData)>(
+          s.files
+        ),
+        Text.equal,
+        Text.hash
+      );
+      chunks = TrieMap.fromEntries<ChunkId, ChunkData>(
+        Iter.fromArray<(ChunkId, ChunkData)>(
+          s.chunks,
+        ),
+        Text.equal,
+        Text.hash
+      );
+    }
+  };
 
-  var state = Types.empty();
+  private func serializeState(s:State):StableState {
+    {
+      files = Iter.toArray(s.files.entries());
+      chunks = Iter.toArray(s.chunks.entries());
+    }
+  };
+
+  stable var stableState:StableState = {
+    files = [];
+    chunks = [];
+  };
+
+  let state:State = deserializeState(stableState);
+
+  system func preupgrade () {
+    stableState := serializeState(state);
+  };
+
+  system func postupgrade () {
+    stableState := {
+      files = [];
+      chunks = [];
+    };
+  };
+
   let limit = 20_000_000_000_000;
 
   public func getSize(): async Nat {
@@ -169,7 +214,6 @@ actor class Bucket () = this {
 
 
   public query func streamingCallback(token:StreamingCallbackToken): async StreamingCallbackResponse {
-    Debug.print("Returning callback...");
     var body:Blob = "404 Not Found";
     var next_token:?StreamingCallbackToken = null;
     let nextChunkNum:Nat = token.chunkNum+1;
@@ -214,7 +258,6 @@ actor class Bucket () = this {
         }
       };
       let fileData:FileData = getFileInfoData(fileId!)!;
-      Debug.print("ContentDisposition is " # fileData.contentDisposition);
       _body := state.chunks.get(chunkId(fileId!, _chunkNum))!;
       _headers := [
         ("Content-Type",fileData.filetype),

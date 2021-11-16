@@ -61,6 +61,11 @@ module {
       chunks : Map<ChunkId, ChunkData>;
   };
 
+  public type StableState = {
+    files: [(FileId, FileData)];
+    chunks: [(ChunkId, ChunkData)];
+  };
+
   public func empty () : State {
     let st : State = {
       files = TrieMap.TrieMap<FileId, FileData>(Text.equal, Text.hash);

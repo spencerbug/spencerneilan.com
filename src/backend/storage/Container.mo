@@ -5,12 +5,13 @@ import Principal "mo:base/Principal";
 import Text "mo:base/Text";
 import Nat "mo:base/Nat";
 import Nat16 "mo:base/Nat16";
-import Buckets "Buckets";
-import Types "./Types";
 import HashMap "mo:base/HashMap";
 import Iter "mo:base/Iter";
 import Blob "mo:base/Blob";
 import Buffer "mo:base/Buffer";
+import List "mo:base/List";
+import Types "./Types";
+import Buckets "Buckets";
 
 
 // Container actor holds all created canisters in a canisters array 
@@ -84,12 +85,60 @@ shared ({caller = owner}) actor class Container() = this {
     bucket  : Bucket;
     var size : Nat;
   };
+
+  private stable var stableCanisters: [(Text, Nat)] = [];
+
+  // restore state from memory
+  private var canisters = List.fromArray<CanisterState<Bucket, Nat>>(
+    Array.map< (Text, Nat), CanisterState<Bucket, Nat>  >(
+      stableCanisters,
+      func (principalText:Text, _size:Nat): CanisterState<Bucket, Nat> {
+        let _bucket:Bucket = actor(principalText);
+        {
+          bucket=_bucket;
+          var size=_size;
+        }
+      }
+    )
+  );
+
   // canister map is a cached way to fetch canisters info
   // this will be only updated when a file is added 
-  private let canisterMap = HashMap.HashMap<Principal, Nat>(100, Principal.equal, Principal.hash);
+  // restore this from stable memory as well
+  private let canisterMap = HashMap.fromIter<Principal, Nat>(
+    Iter.map<(Text, Nat), (Principal, Nat)>(
+      Iter.fromArray<(Text, Nat)>(stableCanisters),
+      func(principalText:Text, size:Nat):(Principal, Nat) {
+        (
+          Principal.fromText(principalText),
+          size
+        )
+      }
+    ),
+    100,
+    Principal.equal,
+    Principal.hash
+  );
+  
+  system func preupgrade() {
+    stableCanisters := List.toArray(
+      List.map<CanisterState<Bucket, Nat>, (Text, Nat)>(
+        canisters,
+        func(canisterState:CanisterState<Bucket, Nat>) {
+          (
+            Principal.toText(Principal.fromActor(canisterState.bucket)),
+            canisterState.size
+          )
+        }
+      )
+    );
+  };
+
+  system func postupgrade() {
+    stableCanisters := [];
+  };
 
 
-  private let canisters : [var ?CanisterState<Bucket, Nat>] = Array.init(10, null);
   // this is the number I've found to work well in my tests
   // until canister updates slow down 
   //From Claudio:  Motoko has a new compacting gc that you can select to access more than 2 GB, but it might not let you
@@ -102,6 +151,7 @@ shared ({caller = owner}) actor class Container() = this {
   // each created canister will receive 1T cycles
   // value is set only for demo purposes please update accordingly 
   private let cycleShare = 1_000_000_000_000;
+
 
 
   // dynamically install a new Bucket
@@ -117,7 +167,7 @@ shared ({caller = owner}) actor class Container() = this {
          bucket = b;
          var size = s;
     };
-    canisters[1] := ?v;
+    canisters := List.push<CanisterState<Bucket, Nat>>(v, canisters);
   
     b;
   };
@@ -129,25 +179,15 @@ shared ({caller = owner}) actor class Container() = this {
       case null { 0 };
       case (?s) { s }
     };
-    let cs: ?(?CanisterState<Bucket, Nat>) =  Array.find<?CanisterState<Bucket, Nat>>(Array.freeze(canisters), 
-        func(cs: ?CanisterState<Bucket, Nat>) : Bool {
-          switch (cs) {
-            case null { false };
-            case (?cs) {
-              Debug.print("found canister with principal..." # debug_show(Principal.toText(Principal.fromActor(cs.bucket))));
-              // calculate if there is enough space in canister for the new file, all of the chunks
-              cs.size + fs < threshold 
-            };
-          };
-      });
+    let cs:?CanisterState<Bucket, Nat> = List.find<CanisterState<Bucket, Nat>>(canisters,
+      func(_cs:CanisterState<Bucket, Nat>):Bool {
+        Debug.print("found canister with principal..." # debug_show(Principal.toText(Principal.fromActor(_cs.bucket))));
+        _cs.size + fs < threshold
+      }
+    );
     let eb : ?Bucket = do ? {
         let c = cs!;
-        let nb: ?Bucket = switch (c) {
-          case (?c) { ?(c.bucket) };
-          case _ { null };
-        };
-
-        nb!;
+        c.bucket
     };
     let c: Bucket = switch (eb) {
         case null { await newEmptyBucket() };
@@ -176,22 +216,25 @@ shared ({caller = owner}) actor class Container() = this {
          freezing_threshold = ?31_540_000} })
     );
   };
+
+  func asyncIterateList<T>(l:List.List<T>, f : T -> async ()): async () {
+    switch (l) {
+      case null { () };
+      case (?(h, t)) {
+        await f(h);
+        await asyncIterateList<T>(t,f)
+      };
+    }
+  };
+
   // go through each canister and check size
   public func updateStatus(): async () {
-    for (i in Iter.range(0, canisters.size() - 1)) {
-      let c : ?CanisterState<Bucket, Nat> = canisters[i];
-      switch c { 
-        case null { };
-        case (?c) {
-          let s = await c.bucket.getSize();
-          let cid = { canister_id = Principal.fromActor(c.bucket)};
-          // Debug.print("IC status..." # debug_show(await IC.canister_status(cid)));
-          Debug.print("canister with id: " # debug_show(Principal.toText(Principal.fromActor(c.bucket))) # " size is " # debug_show(s));
-          c.size := s;
-          let _ = updateSize(Principal.fromActor(c.bucket), s);
-        };
-      }
-    };
+    await asyncIterateList<CanisterState<Bucket, Nat>>(canisters, func (cs:CanisterState<Bucket, Nat>): async (){
+      let s:Nat = await cs.bucket.getSize();
+      Debug.print("canister with id: " # debug_show(Principal.toText(Principal.fromActor(cs.bucket))) # " size is " # debug_show(s));
+      cs.size := s;
+      let _ = updateSize(Principal.fromActor(cs.bucket), s);
+    });
   };
 
   // get canisters status
@@ -216,7 +259,7 @@ shared ({caller = owner}) actor class Container() = this {
     return Principal.fromActor(b);
   };
 
-  // save file info 
+  // save file info, also reserve space in bucket
   public shared(msg) func putFileInfo(fi: FileInfo) : async ?FileUploadResult {
     do ? {
       let b: Bucket = await getEmptyBucket(?fi.size);
@@ -230,24 +273,15 @@ shared ({caller = owner}) actor class Container() = this {
   };
 
   func getBucket(cid: Principal) : ?Bucket {
-    let cs: ?(?CanisterState<Bucket, Nat>) =  Array.find<?CanisterState<Bucket, Nat>>(Array.freeze(canisters), 
-        func(cs: ?CanisterState<Bucket, Nat>) : Bool {
-          switch (cs) {
-            case null { false };
-            case (?cs) {
-              Debug.print("found canister with principal..." # debug_show(Principal.toText(Principal.fromActor(cs.bucket))));
-              Principal.equal(Principal.fromActor(cs.bucket), cid)
-            };
-          };
-      });
-      let eb : ?Bucket = do ? {
-        let c = cs!;
-        let nb: ?Bucket = switch (c) {
-          case (?c) { ?(c.bucket) };
-          case _ { null };
-        };
-
-        nb!;
+    let cs:?CanisterState<Bucket, Nat> = List.find<CanisterState<Bucket, Nat>>(canisters,
+      func(_cs:CanisterState<Bucket, Nat>):Bool {
+        Debug.print("found canister with principal..." # debug_show(Principal.toText(Principal.fromActor(_cs.bucket))));
+        Principal.equal(Principal.fromActor(_cs.bucket), cid)
+      }
+    );
+    let eb : ?Bucket = do ? {
+      let c = cs!;
+      c.bucket;
     };
   };
 
@@ -286,18 +320,15 @@ shared ({caller = owner}) actor class Container() = this {
   // get a list of files from all canisters
   public func getAllFiles() : async [FileData] {
     let buff = Buffer.Buffer<FileData>(0);
-    for (i in Iter.range(0, canisters.size() - 1)) {
-      let c : ?CanisterState<Bucket, Nat> = canisters[i];
-      switch c { 
-        case null { };
-        case (?c) {
-          let bi = await c.bucket.getInfo();
-          for (j in Iter.range(0, bi.size() - 1)) {
-            buff.add(bi[j])
-          };
+    await asyncIterateList<CanisterState<Bucket, Nat>>(
+      canisters,
+      func (cs:CanisterState<Bucket, Nat>): async (){
+        let bi = await cs.bucket.getInfo();
+        for (j in Iter.range(0, bi.size() - 1)) {
+          buff.add(bi[j])
         };
       }
-    };
+    );
     buff.toArray()
   };  
 
