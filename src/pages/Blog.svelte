@@ -7,8 +7,6 @@
     import { push } from 'svelte-spa-router'
     import Editor from './blog/Editor.svelte';
     import { onMount } from 'svelte';
-
-    export let params
     
     const prefix='/blog'
     const routes = {

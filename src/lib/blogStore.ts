@@ -3,7 +3,8 @@ import type { GraphqlClient } from "./graphqlClient";
 
 import { s_identity, s_isLoggedIn, s_graphqlClient, s_authDataLoading } from "./authStore";
 import type { Identity } from "@dfinity/agent";
-import { uploadOrReplaceFile, UploadResult } from "./storageStore";
+import { uploadOrReplaceFile } from "./storageStore";
+import type {UploadResult} from './storageStore'
 import { push } from "svelte-spa-router";
 import { encode as cborEncode, decode as cborDecode } from "@dfinity/agent/lib/cjs/cbor";
 
@@ -20,7 +21,31 @@ export const s_blogArticlePublishedAt=writable("")
 export const s_blogAuthor=writable({id:"",firstName:"",lastName:"",imgUrl:""})
 
 
-
+const articleReturnSchema={
+    content: true,
+    title: true,
+    publishedAt: true,
+    thumbnailUrl: true,
+    description: true,
+    tags: {
+        id: true
+    },
+    comments: {
+        id: true,
+        text: true,
+        author: {
+            id: true,
+            firstName: true,
+            lastName: true
+        }
+    },
+    author: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        imgUrl: true
+    }
+}
 
 // fetch a list of authors and their articles, if authorId==null
 // else fetch the author and articles written by authorId
@@ -78,29 +103,7 @@ export const fetchArticle = async (articleId) => {
                         }
                     }
                 },
-                content: true,
-                title: true,
-                publishedAt: true,
-                thumbnailUrl: true,
-                description: true,
-                tags: {
-                    id: true
-                },
-                comments: {
-                    id: true,
-                    text: true,
-                    author: {
-                        id: true,
-                        firstName: true,
-                        lastName: true
-                    }
-                },
-                author: {
-                    id: true,
-                    firstName: true,
-                    lastName: true,
-                    imgUrl: true
-                }
+                ...articleReturnSchema
             }
         }
     };
@@ -154,6 +157,32 @@ export const createOrUpdateArticle = async (articleId:String):Promise<string> =>
     return resultArticleId
 }
 
+export const deleteArticle = async (articleId:String) => {
+    const identity:Identity = get(s_identity)
+    const isLoggedIn:boolean = get(s_isLoggedIn)
+    const graphqlClient:GraphqlClient = get(s_graphqlClient)
+    if (identity && isLoggedIn && graphqlClient) {
+        s_uploadDraftLoading.set(true)
+        const query = {
+            mutation: {
+                deleteArticle: {
+                    __args: {
+                        input: {
+                            id: articleId
+                        }
+                    },
+                    ...articleReturnSchema
+                }
+            }
+        }
+        const result = await graphqlClient.mutation(query)
+        s_uploadDraftLoading.set(false)
+        console.log(result)
+        return result
+        
+    }
+}
+
 export const loadExistingArticle = async (articleId) => {
     s_uploadDraftLoading.set(true)
     let articles=await fetchArticle(articleId)
@@ -170,6 +199,7 @@ export const loadExistingArticle = async (articleId) => {
         s_blogArticlePublishedAt.set(article.publishedAt)
     }
     s_uploadDraftLoading.set(false)
+    return articles
 }
 
 export const loadNewDraft = () => {

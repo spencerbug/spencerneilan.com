@@ -1,4 +1,3 @@
-
 <script lang="typescript">
     import { onMount } from "svelte"
     import { get, writable } from "svelte/store";
@@ -15,6 +14,7 @@
     export let toolbarOptions = [
         [{header: [1,2,3,false]}],
         ["blockquote", "link", "image", "video", "attachment"],
+        ['code-block'],
         ["bold", "italic", "underline", "strike"],
         [{ list: "ordered" }, { list: "bullet" }],
         [{ 'color': [] }, { 'background': [] }],
@@ -64,7 +64,7 @@
                 imageHandler: {upload: async (file) => {return uploadImage(file)}},
                 videoHandler: {upload: async (file) => {return uploadVideo(file)}},
                 attachmentHandler: {upload: async (file) => {return uploadOrReplaceFile(file)}},
-                imageResize: {}
+                imageResize: {},
             },
             theme: "snow",
             placeholder: "Write your article here..."

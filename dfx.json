@@ -10,9 +10,9 @@
     },
     "graphql": {
       "type": "custom",
-      "build": "cargo build --target wasm32-unknown-unknown --package graphql --release",
+      "build": "./build_graphql.sh",
       "candid": "src/backend/graphql/src/graphql.did",
-      "wasm": "target/wasm32-unknown-unknown/release/graphql.wasm"
+      "wasm": "target/wasm32-unknown-unknown/release/graphql-opt.wasm"
     },
     "playground": {
       "dependencies": ["graphql"],
@@ -20,7 +20,7 @@
       "source": ["src/backend/playground/build"]
     },
     "assets": {
-      "dependencies": ["storage"],
+      "dependencies": ["storage","bucket"],
       "frontend": {
         "entrypoint": "dist/index.html"
       },
@@ -28,7 +28,7 @@
       "type": "assets"
     }
   },
-  "dfx": "0.8.3",
+  "dfx": "0.8.4",
   "networks": {
     "local": {
       "bind": "127.0.0.1:8000",

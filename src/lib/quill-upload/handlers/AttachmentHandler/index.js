@@ -13,11 +13,7 @@ class AttachmentHandler extends BaseHandler {
 
     fileChanged = async (event) => {
         const file = this.loadFile(this)
-        await this.embedFile(file)
-    }
-
-    embedFile = async(file) => {
-        const val=await super.embedFile(file)
+        const val = await this.embedFile(file)
         if(val){
             // workaround for a bug where inserting a link and pressing enter
             // seems to duplicate the link on the following line
@@ -26,7 +22,6 @@ class AttachmentHandler extends BaseHandler {
             this.quill.setSelection(newCursor+1)
             this.quill.removeFormat(newCursor,1) 
         }
-        return val
     }
 
 }
