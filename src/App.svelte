@@ -9,6 +9,7 @@
   import { onMount } from 'svelte';
   import {s_authDataLoading, authInit} from './lib/authStore'
   import Router from 'svelte-spa-router'
+  import Profile from './pages/Profile.svelte';
 
 
 
@@ -19,8 +20,6 @@
   // const prefix = `/${process.env["VITE_APP_ASSETS_CANISTER_ID"]}}`
 
 </script>
-
-<!-- <Styles/> -->
 
 <main>
   <Nav/>
@@ -33,7 +32,9 @@
       '/register': Register,
       '/projects': Projects,
       '/blog':Blog,
-      '/resume':Resume
+      '/blog/*':Blog,
+      '/resume':Resume,
+      '/profile/:authorId':Profile
     }}/>
     {/if}
   </Container>

@@ -39,14 +39,14 @@
 </style>
 
 <Navbar color="primary" class="navbar-dark" light expand="md">
-    <NavbarBrand href="#">Spencer Neilan</NavbarBrand>
+    <NavbarBrand href="/#">Spencer Neilan</NavbarBrand>
     <NavbarToggler on:click={() => (isOpen = !isOpen)} />
     <Collapse {isOpen} navbar expand="md" on:update={handleUpdate}>
         <Nav class="me-auto" navbar>
-        <NavItem><NavLink href="#/">Home</NavLink></NavItem>
-        <NavItem><NavLink href="#/projects">Projects</NavLink></NavItem>
-        <NavItem><NavLink href="#/blog">Blog</NavLink></NavItem>
-        <NavItem><NavLink href="#/resume">Resume</NavLink></NavItem>
+        <NavItem><NavLink href="/#">Home</NavLink></NavItem>
+        <NavItem><NavLink href="/#/projects">Projects</NavLink></NavItem>
+        <NavItem><NavLink href="/#/blog">Blog</NavLink></NavItem>
+        <NavItem><NavLink href="/#/resume">Resume</NavLink></NavItem>
         </Nav>
         <Nav class="ms-auto" navbar>
         {#if $s_authLoading}
@@ -55,7 +55,7 @@
         {#if !$s_isLoggedIn}
             <NavItem>
                 <NavLink on:click={async () => await handleLogin()}>
-                    Log in with <span><img src="dfinity-logo-vector-small.svg" class="icon" alt="Dfinity Logo"></span>
+                    Log in with <span><img src="/dfinity-logo-vector-small.svg" class="icon" alt="Dfinity Logo"></span>
                 </NavLink>
             </NavItem>
         {:else}
@@ -66,7 +66,7 @@
                 <DropdownToggle nav caret>Hello, stranger! Please Register</DropdownToggle>
                 {/if}
                 <DropdownMenu end>
-                    <DropdownItem href="#/register">My Account</DropdownItem>
+                    <DropdownItem href="/#/register">My Account</DropdownItem>
                     <DropdownItem divider/>
                     <DropdownItem on:click={async () => await handleLogout()}>Logout</DropdownItem>
                 </DropdownMenu>

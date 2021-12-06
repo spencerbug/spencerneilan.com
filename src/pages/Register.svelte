@@ -1,9 +1,23 @@
 <script>
-    // import {createEventDispatcher} from 'svelte'
-    import { Form, FormGroup, Button, Input, Label } from 'sveltestrap'
-    import {s_myAccount, s_hasAccount, registerOrUpdateMyAccount } from "../lib/authStore"
-    
+import { uploadImage } from '../lib/storageStore';
 
+// import {createEventDispatcher} from 'svelte'
+import { Form, FormGroup, Button, Input, Label, Spinner, Icon } from 'sveltestrap'
+import {s_myAccount, s_hasAccount, registerOrUpdateMyAccount } from "../lib/authStore"
+
+let fileInput
+
+const onImageSelected = async (e) => {
+    imageLoading=true
+    let img = await(uploadImage(e.target.files[0]))
+    s_myAccount.update(state=>{
+        state.imgUrl = img.url
+        return state
+    })
+    await registerOrUpdateMyAccount()
+    imageLoading=false
+}
+let imageLoading=false
     
 </script>
 
@@ -29,8 +43,19 @@
         <Input type="email" bind:value={$s_myAccount.email} id="email"/>
     </FormGroup>
     <FormGroup>
-        <Label for="imgUrl">Image URL</Label>
-        <Input type="text" bind:value={$s_myAccount.imgUrl} id="imgUrl"/>
+        {#if imageLoading}
+            <Spinner/>
+        {:else}
+            <Label for="imgUrl">Profile Image</Label>
+            {#if $s_myAccount.imgUrl}
+            <img src="{$s_myAccount.imgUrl}" alt="Your pic here" width=50px height=50px class="rounded-circle">
+            {/if}
+            <input type="file" name="avatar" accept="image" style="display:none" on:change={async (e)=>{await onImageSelected(e)}} bind:this={fileInput}/>
+
+            <Button type="button" on:click={()=>{fileInput.click()}}>
+                <Icon name="upload"/>
+            </Button>
+        {/if}
     </FormGroup>
     {#if $s_hasAccount}
     <Button type="submit">Update</Button>

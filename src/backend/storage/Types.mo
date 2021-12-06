@@ -14,7 +14,8 @@ module {
   public type ChunkData = Blob;
 
   public type ChunkId = Text; 
-  
+
+  type ReservedSize = Nat;
 
   public type FileInfo = {
     createdAt : Timestamp;
@@ -75,43 +76,24 @@ module {
   };
 
   public type StreamingCallbackToken = {
+    key : Text;
     content_encoding : Text;
-    fileId : FileId;
-    chunkNum : Nat; //starts at 1
-    totalChunks: Nat;
+    index : Nat; //starts at 1
+    sha256: ?[Nat8];
   };
 
-  public type StreamingCallbackResponse = {
-    body : Blob;
+  public type StreamingCallbackHttpResponse = {
     token : ?StreamingCallbackToken;
+    body : [Nat8];
   };
 
-  public type StreamingCallback = query (StreamingCallbackToken) -> async (StreamingCallbackResponse);
+  public type StreamingCallback = query StreamingCallbackToken  -> async StreamingCallbackHttpResponse;
 
 
-  // streaming strategy is a recursive operation
-  /*
-  http_request response:
-  {
-    status_code, 
-    headers, 
-    body=chunkN,
-    streamingStrategy={
-      StreamingCallbackToken tokenN,
-      callback = (token(N))-> StreamingCallbackResponse {
-        Blob body=chunkN+1,
-        StreamingCallbackToken tokenN+1|null if last chunk
-      }
-    }
-  }
-  
-  client in browser will call an http request that effectively calls callback(token(N)), callback(token(N+1)), ...
-
-  */
   public type StreamingStrategy = {
     #Callback: {
-      callback : StreamingCallback;
       token : StreamingCallbackToken;
+      callback : StreamingCallback
     }
   };
 

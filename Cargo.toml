@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    "src/backend/graphql",
+    "src/backend/graphql"
 ]
 
 [profile.release]

@@ -1,9 +1,17 @@
 import Quill from "quill"
 import Constants from "../../utils/Constants";
-let BlockEmbed = Quill.import("blots/embed")
+// let BlockEmbed = Quill.import("blots/embed")
+let Image = Quill.import("formats/image")
 import type { UploadResult } from '../../../storageStore'
 
-class ImageBlot extends BlockEmbed {
+const ATTRIBUTES = [
+    'alt',
+    'height',
+    'width',
+    'display',
+    'style'
+  ];
+class ImageBlot extends Image {
     /**
      * value must be: object of value.id, value.src
      */
@@ -29,6 +37,15 @@ class ImageBlot extends BlockEmbed {
         return node;
     }
 
+    static formats(domNode) {
+        return ATTRIBUTES.reduce(function(formats, attribute) {
+          if (domNode.hasAttribute(attribute)) {
+            formats[attribute] = domNode.getAttribute(attribute);
+          }
+          return formats;
+        }, {});
+      }
+
     static value(node) {
         return {
             alt: node.getAttribute('alt'),
@@ -38,12 +55,13 @@ class ImageBlot extends BlockEmbed {
 }
 
 // @ts-ignore
-ImageBlot.blotName = Constants.blots.video
+ImageBlot.blotName = Constants.blots.image
 // @ts-ignore
 ImageBlot.tagName = 'img'
 // @ts-ignore
 ImageBlot.className = 'ql-image'
 
-Quill.register(ImageBlot)
+Quill.debug('error')
+Quill.register('formats/image',ImageBlot, true)
 
 export default ImageBlot

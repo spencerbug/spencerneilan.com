@@ -1,11 +1,10 @@
 import Quill from 'quill'
 import Constants from '../../utils/Constants';
 import type { UploadResult } from '../../../storageStore'
-// import BlockEmbed from 'quill/blots/embed'
 
-let BlockEmbed = Quill.import("blots/embed")
+let Video = Quill.import("formats/video")
 
-class VideoBlot extends BlockEmbed {
+class VideoBlot extends Video {
     /**
      * value must be object of value.id, value.src
      */
@@ -73,8 +72,9 @@ VideoBlot.tagName = "iframe";
 // @ts-ignore
 VideoBlot.blotName = Constants.blots.video
 // @ts-ignore
-VideoBlot.className = 'quill-upload-video'
+VideoBlot.className = 'ql-video'
 
-Quill.register(VideoBlot);
+Quill.debug('error')
+Quill.register('formats/video',VideoBlot, true);
 
 export default VideoBlot;

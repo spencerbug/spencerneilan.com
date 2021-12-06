@@ -1,27 +1,11 @@
 import type { Principal } from '@dfinity/principal';
 export interface Container {
-  'delFileChunk' : (
-      arg_0: FileId__1,
-      arg_1: bigint,
-      arg_2: Principal,
-    ) => Promise<[] | [null]>,
-  'delFileInfo' : (arg_0: FileId__1, arg_1: Principal) => Promise<[] | [null]>,
-  'getAllFiles' : () => Promise<Array<FileData>>,
-  'getFileChunk' : (
-      arg_0: FileId__1,
-      arg_1: bigint,
-      arg_2: Principal,
-    ) => Promise<[] | [Array<number>]>,
-  'getFileInfo' : (arg_0: FileId__1, arg_1: Principal) => Promise<
-      [] | [FileData]
-    >,
+  'getAllFiles' : () => Promise<Array<[Principal, FileData]>>,
   'getStatus' : () => Promise<Array<[Principal, bigint]>>,
-  'putFileChunk' : (
-      arg_0: FileId__1,
-      arg_1: bigint,
-      arg_2: Array<number>,
-    ) => Promise<Principal>,
-  'putFileInfo' : (arg_0: FileInfo) => Promise<[] | [FileUploadResult]>,
+  'reserveFile' : (arg_0: FileInfo) => Promise<[] | [FileUploadResult]>,
+  'updateReserveFile' : (arg_0: FileId, arg_1: FileInfo) => Promise<
+      [] | [FileUploadResult]
+    >,
   'updateStatus' : () => Promise<undefined>,
   'wallet_balance' : () => Promise<bigint>,
   'wallet_receive' : () => Promise<undefined>,
@@ -33,7 +17,7 @@ export interface FileData {
   'createdAt' : Timestamp,
   'size' : bigint,
   'filetype' : string,
-  'fileId' : FileId,
+  'fileId' : FileId__1,
   'chunkCount' : bigint,
   'uploadedAt' : Timestamp,
 }
@@ -47,6 +31,9 @@ export interface FileInfo {
   'filetype' : string,
   'chunkCount' : bigint,
 }
-export interface FileUploadResult { 'bucketId' : Principal, 'fileId' : FileId }
+export interface FileUploadResult {
+  'bucketId' : Principal,
+  'fileId' : FileId__1,
+}
 export type Timestamp = bigint;
 export interface _SERVICE extends Container {}

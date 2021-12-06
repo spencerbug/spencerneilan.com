@@ -8,3 +8,4 @@ dist-ssr
 src/backend/storage_dht/*
 target
 package-lock.json
+.vscode

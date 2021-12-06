@@ -1,6 +1,7 @@
 import Quill from "quill"
+// import Parchment from "parchment"
 import Constants from "../../utils/Constants";
-let Link = Quill.import("formats/link")
+const Link = Quill.import("formats/link")
 import type { UploadResult } from '../../../storageStore'
 
 class AttachmentBlot extends Link {
@@ -27,12 +28,17 @@ class AttachmentBlot extends Link {
         node = super.create(url)
 
         node.setAttribute('href', super.sanitize(url))
+        node.setAttribute('target', '_blank')
         node.appendChild(new Text(linktext))
         if (id){
             node.setAttribute("id",id)
         }
         
         return node;
+    }
+
+    static formats(node) {
+        return node.getAttribute('href')
     }
 
     static value(node) {
@@ -46,8 +52,8 @@ AttachmentBlot.tagName = 'A'
 // @ts-ignore
 AttachmentBlot.className = 'ql-attachment'
 
-
-Quill.register(AttachmentBlot)
+Quill.debug('error')
+Quill.register('formats/attachment',AttachmentBlot, true)
 
 
 export default AttachmentBlot

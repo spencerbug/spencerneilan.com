@@ -15,7 +15,7 @@ function debug
     echo "#############|  End of DEBUG mode |####################";
 }
 
-set -x
+# set -x
 
 cd $(git rev-parse --show-toplevel)
 
@@ -24,12 +24,14 @@ filename=testfile.txt
 fileext=$(echo ${filename} | cut -d'.' -f2)
 
 # create a 20MB file
-seq 1000000 | head -c 20000 > ${filename}
+seq 100000 | head -c 3000 > ${filename}
 
 mimetype="text/plain"
 
 
 storage_id=$(dfx canister id storage)
+
+# dfx canister call $storage_id deleteAllBuckets
 
 balance=$(dfx canister call $storage_id wallet_balance | cut -d'(' -f2 | cut -d' ' -f1)
 
@@ -37,7 +39,7 @@ if [[ $balance == 0 ]]; then
     dfx wallet send $storage_id 1000000000000
 fi
 
-filesize=$(wc -c $filename | sed -e 's/^[[:space:]]*//' | cut -d' ' -f1)
+filesize=$(($(wc -c $filename | sed -e 's/^[[:space:]]*//' | cut -d' ' -f1) ))
 
 max_payload_size=1000
 
@@ -56,7 +58,7 @@ echo "fileId is $fileId"
 # debug
 i=1
 for i in $(seq $num_chunks); do
-    chunk=$(dd if=$filename ibs=$max_payload_size skip=$(( $i - 1 )) count=1 )
+    chunk=$(dd if=$filename ibs=$max_payload_size skip=$(( $i - 1 )) count=1)
     result=$(dfx canister call ${storage_id} putFileChunk "(\"$fileId\", $i:nat, blob \"$chunk\")")
     bucketId=$(echo ${result} | cut -d'"' -f2)
 done
@@ -68,6 +70,6 @@ dfx canister call ${storage_id} getFileChunk "(\"${fileId}\", 1:nat, principal \
 
 result=$(curl -v "http://127.0.0.1:8000/storage?fileId=$fileId&canisterId=$bucketId")
 
-[[ $result == "testfile" ]] && echo "test passed" || echo "test failed"
+[[ $result == $(cat testfile.txt) ]] && echo "test passed" || echo "test failed"
 
-set +x
+# set +x

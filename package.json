@@ -6,7 +6,8 @@
     "dev": "vite",
     "build": "cd src/backend/playground && npm install && npm run build && cd ../../.. && vite build",
     "serve": "vite preview",
-    "watch": "ic-dfx-watch"
+    "watch": "ic-dfx-watch",
+    "deploy-clean": "./clean-deploy.sh"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "next",
@@ -32,6 +33,7 @@
     "bootstrap": "^5.0.2",
     "json-to-graphql-query": "^2.1.0",
     "quill": "^1.3.7",
+    "quill-image-resize-module": "^3.0.0",
     "svelte": "^3.38.3",
     "svelte-spa-router": "^3.2.0",
     "sveltestrap": "^5.1.1"

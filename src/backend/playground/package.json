@@ -1,6 +1,6 @@
 {
     "scripts": {
-        "build": "snowpack build --polyfill-node"
+        "build": "SNOWPACK_PUBLIC_GRAPHQL_CANISTERID=$(cd ../../.. && dfx canister id graphql) snowpack build --polyfill-node"
     },
     "devDependencies": {
         "snowpack": "3.4.0"

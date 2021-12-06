@@ -9,18 +9,18 @@ class ImageHandler extends BaseHandler {
         this.applyForToolbar()
     }
 
-    fileChanged() {
+    fileChanged = async () => {
         const file = this.loadFile(this)
         const extension = file.name.split(".").pop();
 
-        if (!this.isImage(extension)){
+        if (!BaseHandler.isImage(extension)){
             console.warn(
                 "[Wrong Format] ImageHandler requires an image format extension"
             );
             return;
         }
 
-        this.embedFile(file);
+        await this.embedFile(file);
     }
 
 }

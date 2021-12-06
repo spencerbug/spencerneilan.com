@@ -18,20 +18,33 @@ export class GraphqlClient {
     }
 
     // takes in a json object following https://www.npmjs.com/package/json-to-graphql-query
-    async query(queryJSON:any) {
+    async query(queryJSON:any, args={}) {
+        try {
         const queryString = jsonToGraphQLQuery(queryJSON)
-        // console.log(queryString)
-        const result = await this.actor.graphql_query(queryString, '{}')
+        console.log(queryString)
+        const result = await this.actor.graphql_query(queryString, JSON.stringify(args))
         const resultJSON = JSON.parse(result as string)
         return resultJSON
+        }
+        catch(error){
+            alert(error)
+            return {}
+        }
     }
 
-    async mutation(mutationJSON:any) {
-        const queryString = jsonToGraphQLQuery(mutationJSON)
-        // console.log(queryString)
-        const result = await this.actor.graphql_mutation(queryString, '{}')
-        const resultJSON = JSON.parse(result as string)
-        return resultJSON
+    async mutation(mutationJSON:any, args={}) {
+        try {
+            const queryString = jsonToGraphQLQuery(mutationJSON)
+            console.log(queryString)
+            const result = await this.actor.graphql_mutation(queryString, JSON.stringify(args))
+            const resultJSON = JSON.parse(result as string)
+            return resultJSON
+        }
+        catch(error){
+            alert(error)
+            return {}
+        }
+        
     }
 
 

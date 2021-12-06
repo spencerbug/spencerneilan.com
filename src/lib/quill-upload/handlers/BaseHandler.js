@@ -11,6 +11,10 @@ class BaseHandler {
         }
     }
 
+    setRange(r){
+        this.range=r
+    }
+
     fileChanged() {
         console.error("Cannot call base class BadeHandler.fileChanged()");
     }
@@ -52,20 +56,18 @@ class BaseHandler {
         }
     }
 
-    embedFile(file) {
-        this.options.upload(file).then(
-            value => {
-                console.log(value)
-                this.replaceFileToEditor(value)
-            },
-            error => {
-                console.warn(error.message)
-            }
-        )
+    embedFile = async(file) => {
+        try {
+            let value = await this.options.upload(file)
+            this.replaceFileToEditor(value)
+            return value
+        }
+        catch(error){
+            console.warn(error.message)
+        }
     }
 
     replaceFileToEditor(val) {
-        
         this.quill.insertEmbed(
             this.range.index,
             this.handlerName,
@@ -79,11 +81,11 @@ class BaseHandler {
         }
     }
 
-    isImage(extension) {
+    static isImage(extension) {
         return /(gif|jpg|jpeg|tiff|png)$/i.test(extension);
     }
 
-    isVideo(extension) {
+    static isVideo(extension) {
         return /(mp4|m4a|3gp|f4a|m4b|m4r|f4b|mov|flv|avi|ogg)$/i;
     }
 

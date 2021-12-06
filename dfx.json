@@ -4,6 +4,10 @@
       "main":"src/backend/storage/Container.mo",
       "type":"motoko"
     },
+    "bucket":{
+      "main":"src/backend/storage/Buckets.mo",
+      "type":"motoko"
+    },
     "graphql": {
       "type": "custom",
       "build": "cargo build --target wasm32-unknown-unknown --package graphql --release",
@@ -11,23 +15,20 @@
       "wasm": "target/wasm32-unknown-unknown/release/graphql.wasm"
     },
     "playground": {
+      "dependencies": ["graphql"],
       "type": "assets",
       "source": ["src/backend/playground/build"]
     },
     "assets": {
-      "dependencies": [
-        "storage"
-      ],
+      "dependencies": ["storage"],
       "frontend": {
         "entrypoint": "dist/index.html"
       },
-      "source": [
-        "dist/"
-      ],
+      "source": ["dist/"],
       "type": "assets"
     }
   },
-  "dfx": "0.8.1",
+  "dfx": "0.8.3",
   "networks": {
     "local": {
       "bind": "127.0.0.1:8000",

@@ -15,8 +15,7 @@ type Account {
 }
 
 type Tag {
-    id: ID!
-    name: String!
+    id: ID! #ID is the name of the tag, must be unique
 }
 
 type Comment {
@@ -28,8 +27,8 @@ type Comment {
 
 type Article {
     id: ID!
-    articleUrl: String
     title: String!
+    content: String
     publishedAt: Date
     description: String
     thumbnailUrl: String
