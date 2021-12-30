@@ -44,10 +44,10 @@ onMount(async () => {
                 <Card>
                     <CardTitle>{title}</CardTitle>
                     <CardBody>
-                        <CardSubtitle>Published on {new Date(publishedAt)}</CardSubtitle>
-                        <CardText>{description}</CardText>
+                        <CardSubtitle>{description}</CardSubtitle>
                     </CardBody>
                     <CardFooter>
+                        Published on {new Date(publishedAt)}
                         {#if tags}{#each tags as {id}}
                         <Badge class="inline-block">
                             {id}
